@@ -1,0 +1,25 @@
+# .bashrc
+
+# User specific aliases and functions
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+#by zhj
+function git_branch {
+	ref=$(git symbolic-ref HEAD 2> /dev/null) || return;
+	echo "("${ref#refs/heads/}") ";
+}
+export PS1='[\u@\W]$(git_branch)\$ '
+#PS1='[\u@\h \W]\$ '
+PATH="$PATH":~/scripts
+alias clr='clear'
+PATH="$PATH":/root/Desktop/eclipse/eclipse
+#PATH="$PATH":/usr/local/lib/
+alias myedit='eclipse &'
