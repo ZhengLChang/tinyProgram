@@ -1,0 +1,32 @@
+#!/bin/bash
+regStr=[0-9a-zA-Z.]*
+case ${1#*} in
+${regStr}tar)
+	tar -xvf $1
+	;;
+${regStr}gz)
+	gzip -d $1
+	;;
+${regStr}zip)
+	unzip $1
+	;;
+${regStr}rar)
+	rar -x $1
+	;;
+${regStr}tar.bz2)
+	tar -jxvf $1
+	;;
+${regStr}tar.gz)
+	tar -zxvf $1
+	tar xvf ${1%.*}
+	;;
+${regStr}bz)
+	bzip2 -d $1
+	;;
+${regStr}tar.xz)
+	xz -d $1
+	tar xvf ${1%.*}
+	;;
+*)
+	echo "wrong file type"
+esac
