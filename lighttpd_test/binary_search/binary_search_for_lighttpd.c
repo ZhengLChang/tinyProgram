@@ -29,7 +29,7 @@ int binary_search(int arr[], int n, int num)
 		if(i == 0)
 			break;
 	}
-	return -1;
+	return pos;
 }
 
 int main()
@@ -42,6 +42,6 @@ int main()
 	}
 #endif
 	int arr[] = {1,  2, 3, 4, 5, 6, 7, 8};
-	printf("%d\n", binary_search(arr, sizeof(arr) / sizeof(int), 8));
+	printf("%d\n", binary_search(arr, sizeof(arr) / sizeof(int), 9));
 	return 0;
 }
