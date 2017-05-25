@@ -18,6 +18,6 @@ char hex2int(unsigned char hex)
 
 int main()
 {
-	printf("%d\n", hex2int('@'));
+	printf("%d\n", hex2int('?'));
 	return 0;
 }
