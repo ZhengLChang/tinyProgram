@@ -991,6 +991,7 @@ int main (int argc, char **argv) {
 #define HAVE_FORK
 #ifdef HAVE_FORK
 	/* start watcher and workers */
+	srv->srvconf.max_worker = 5;
 	num_childs = srv->srvconf.max_worker;
 	if (num_childs > 0) {
 		int child = 0;
