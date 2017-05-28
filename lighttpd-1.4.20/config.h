@@ -23,7 +23,6 @@
 #define HAVE_DUP2 1
 
 /* Define to 1 if you have the `epoll_ctl' function. */
-#define HAVE_EPOLL_CTL 1
 
 /* Define to 1 if you have the <errmsg.h> header file. */
 /* #undef HAVE_ERRMSG_H */
@@ -176,7 +175,6 @@
 #define HAVE_PCRE_H 1
 
 /* Define to 1 if you have the `poll' function. */
-#define HAVE_POLL 1
 
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
@@ -218,7 +216,6 @@
 #define HAVE_SIGNAL 1
 
 /* Define to 1 if you have the `sigtimedwait' function. */
-#define HAVE_SIGTIMEDWAIT 1
 
 /* Define to 1 if you have the `socket' function. */
 #define HAVE_SOCKET 1
