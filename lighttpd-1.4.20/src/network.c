@@ -34,6 +34,7 @@ handler_t network_server_handle_fdevent(void *s, void *context, int revents) {
 
 	UNUSED(context);
 
+	printf("pid %ld, accept link\n", getpid());
 	if (revents != FDEVENT_IN) {
 		log_error_write(srv, __FILE__, __LINE__, "sdd",
 				"strange event for server socket",
@@ -227,45 +228,6 @@ int network_server_init(server *srv, buffer *host_token, specific_config *s) {
 		srv_socket->addr.ipv4.sin_port = htons(port);
 
 		addr_len = sizeof(struct sockaddr_in);
-
-		break;
-	case AF_UNIX:
-		srv_socket->addr.un.sun_family = AF_UNIX;
-		strcpy(srv_socket->addr.un.sun_path, host);
-
-#ifdef SUN_LEN
-		addr_len = SUN_LEN(&srv_socket->addr.un);
-#else
-		/* stevens says: */
-		addr_len = strlen(host) + 1 + sizeof(srv_socket->addr.un.sun_family);
-#endif
-
-		/* check if the socket exists and try to connect to it. */
-		if (-1 != (fd = connect(srv_socket->fd, (struct sockaddr *) &(srv_socket->addr), addr_len))) {
-			close(fd);
-
-			log_error_write(srv, __FILE__, __LINE__, "ss",
-				"server socket is still in use:",
-				host);
-
-
-			return -1;
-		}
-
-		/* connect failed */
-		switch(errno) {
-		case ECONNREFUSED:
-			unlink(host);
-			break;
-		case ENOENT:
-			break;
-		default:
-			log_error_write(srv, __FILE__, __LINE__, "sds",
-				"testing socket failed:",
-				host, strerror(errno));
-
-			return -1;
-		}
 
 		break;
 	default:

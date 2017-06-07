@@ -2,7 +2,7 @@
 
 #define MAXN 16384
 #define MAXLINE 1024
-
+long cptr;
 int main(int argc, char **argv)
 {
 	int i, j, fd, nchildren, nloops, nbytes;

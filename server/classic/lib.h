@@ -13,6 +13,9 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pthread.h>
 
 #define MAXN 16384
 
@@ -39,10 +42,18 @@ ssize_t
   readline(int fd, void *vptr, size_t maxlen);
 ssize_t
   writen(int fd, const void *vptr, size_t n);
+#if 0
 pid_t
   child_make(int i, int listenfd, int addrlen);
 void
   child_main(int i, int listenfd, int addrlen);
+#endif
 long *
   meter(int nchildren);
+void
+  my_lock_init(char *pathname);
+void
+  my_lock_wait();
+void
+  my_lock_release();
 #endif

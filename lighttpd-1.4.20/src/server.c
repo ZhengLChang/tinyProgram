@@ -573,9 +573,11 @@ int main (int argc, char **argv) {
 	}
 
 	/* close stdin and stdout, as they are not needed */
+#if 0   //by zhj
 	openDevNull(STDIN_FILENO);
 	openDevNull(STDOUT_FILENO);
 
+#endif
 	if (0 != config_set_defaults(srv)) {
 		log_error_write(srv, __FILE__, __LINE__, "s",
 				"setting default values failed");

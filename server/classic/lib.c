@@ -33,6 +33,14 @@ void
   child_main(int i, int listenfd, int addrlen);
 long *
   meter(int nchildren);
+void
+  my_lock_init(char *pathname);
+void
+  my_lock_wait();
+void
+  my_lock_release();
+
+static pthread_mutex_t *mptr;
 
 struct addrinfo*
   host_serv(const char *host, const char *serv, int family, int socktype)
@@ -78,7 +86,7 @@ int
 	}
 	if(res == NULL)
 	{
-		printf("tcp_connect error for %s, %s\n", host, serv);
+		printf("tcp_connect error for %s, %s: errno %d, %s\n", host, serv, errno, strerror(errno));
 		return -1;	
 	}
 	freeaddrinfo(ressave);
@@ -472,6 +480,44 @@ long *
 	ptr = mmap(0, nchildren * sizeof(long), PROT_READ | PROT_WRITE,
 			MAP_ANON | MAP_SHARED, -1 , 0);
 	return ptr;
+}
+
+void
+  my_lock_init(char *pathname)
+{
+	int fd;
+	pthread_mutexattr_t mattr;
+
+	fd = open("/dev/zero", O_RDWR, 0);
+	if(fd < 0)
+	{
+		printf("open error: %s\n", strerror(errno));
+		return;
+	}
+	mptr = mmap(0, sizeof(pthread_mutex_t), PROT_READ | PROT_WRITE, 
+			MAP_SHARED, fd, 0);
+	if(mptr == (void *)-1)
+	{
+		printf("mmap error: %s\n", strerror(errno));
+		return;
+	}
+	close(fd);
+
+	pthread_mutexattr_init(&mattr);
+	pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	pthread_mutex_init(mptr, &mattr);
+}
+
+void
+  my_lock_wait()
+{
+	pthread_mutex_lock(mptr);
+}
+
+void
+  my_lock_release()
+{
+	pthread_mutex_unlock(mptr);
 }
 
 
