@@ -42,7 +42,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	
-	if(requestResource(sockfd, "GET", (p == NULL) ? "/" : p) < 0)
+	//if(requestResource(sockfd, "OPTIONS", (p == NULL) ? "/" : p) < 0)
+	//if(requestResource(sockfd, "HEAD", (p == NULL) ? "/" : p) < 0)
+	if(requestResource(sockfd, "GET", (p == NULL) ? "" : p) < 0)
 	{
 		return -1;
 	}
@@ -134,10 +136,17 @@ int tcp_connect(const char *host, const char *serv)
 
 int requestResource(int sockfd, const char *method, const char *URL)
 {
-	char request[1024] = "";
+	char request[1024] = "", host_str[1024] = "";
 	int n = -1;
-	n = snprintf(request, sizeof(request), "%s %s %s\r\n%s\r\n\r\n",
-			method, URL, "HTTP/1.1", "Host: wwww.baidu.com");
+	struct sockaddr_storage addr;
+	socklen_t addrlen = sizeof(addr);
+	if(getpeername(sockfd, (struct sockaddr *)&addr, &addrlen) != 0)
+	{
+		printf("getpeer name error: %s\n", strerror(errno));
+		return -1;
+	}
+	n = snprintf(request, sizeof(request), "%s /%s %s\r\nHost: %s\r\n\r\n",
+			method, URL, "HTTP/1.1", host_str);
 #if 0	
 			"Host: 119.75.218.70\r\nCookie: BD_HOME=0; BD_UPN=143254\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50\r\nAccept-Language: zh-cn\r\nCache-Control: max-age=0\r\nAccept-Encoding: gzip, deflate"*/);
 #endif
@@ -146,6 +155,7 @@ int requestResource(int sockfd, const char *method, const char *URL)
 		printf("out of memory\n");
 		return -1;
 	}
+
 	if(n != write(sockfd, request, n))
 	{
 		printf("write error\n");
