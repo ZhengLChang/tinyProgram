@@ -140,13 +140,16 @@ int requestResource(int sockfd, const char *method, const char *URL)
 	int n = -1;
 	struct sockaddr_storage addr;
 	socklen_t addrlen = sizeof(addr);
+	char head_str[] = "";//"Accept-Encoding: gzip, deflate\r\nCookie: avh=1551186%2c3988220; uuid=349eed6d-9539-4877-a91b-682a566de1e7; ViewMode=contents; bdshare_firstime=1480421225986; Hm_lpvt_6bcd52f51e9b3dce32bec4a3997715ac=1497063262; Hm_lvt_6bcd52f51e9b3dce32bec4a3997715ac=1496837874,1497005119,1497060529,1497062167; dc_session_id=1497062167959; dc_tos=orb9em; __message_cnel_msg_id=0; __message_gu_msg_id=0; __message_in_school=0; __message_sys_msg_id=0; AU=A73; BT=1497005115616; UE=\"13007568302@163.com\"; UN=shanguangy111; UserInfo=69Z6h2nosBgZPrffBgZFGPL86TEJGYT3hukjE%2BXHBXn1%2BOgsP3QqNeJ8KV8h6QviJo2E1HMpIlUsx%2BTwE%2BaFrKWfI4JFkYiwrsBSa6LAfiUeie%2FKGCl0k4%2FK8wP1ty7L07aQk1hMv8v6wefQ6eT5og%3D%3D; UserName=shanguangy111; UserNick=shanguangy111; access-token=54bad00d-9a7c-44e6-a7da-8a6d6353978f; __message_district_code=440000; _message_m=1ifkmsfiu0tr0w2oux52sbu0; _ga=GA1.2.1447763746.1480822393; uuid_tt_dd=1154745465028365705_20161129\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50\r\nReferer: http://blog.csdn.net/gobitan/article/details/1551186\r\nCache-Control: max-age=0\r\nAccept-Language: zh-cn";
 	if(getpeername(sockfd, (struct sockaddr *)&addr, &addrlen) != 0)
 	{
 		printf("getpeer name error: %s\n", strerror(errno));
 		return -1;
 	}
-	n = snprintf(request, sizeof(request), "%s /%s %s\r\nHost: %s\r\n\r\n",
-			method, URL, "HTTP/1.1", host_str);
+	
+	getHostAddr(&addr, host_str, sizeof(host_str));
+	n = snprintf(request, sizeof(request), "%s /%s %s\r\nHost: %s\r\n%s\r\n\r\n",
+			method, URL, "HTTP/1.1", host_str, "Authorization: Basic emhlbmc6emhlbmc=");
 #if 0	
 			"Host: 119.75.218.70\r\nCookie: BD_HOME=0; BD_UPN=143254\r\nConnection: keep-alive\r\nUpgrade-Insecure-Requests: 1\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50\r\nAccept-Language: zh-cn\r\nCache-Control: max-age=0\r\nAccept-Encoding: gzip, deflate"*/);
 #endif
