@@ -99,6 +99,7 @@ int main(void)
 		}
 		printf("recv from %s, %s\n", dst, buf);
 	}
+	freeaddrinfo(res);
 	close(sock);
 
 	return 0;
