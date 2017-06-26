@@ -95,46 +95,20 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		int read_n = 0, file_size = file_stat.st_size;
-		char *save_p = p;
 		if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
 		{
 			munmap(p, file_stat.st_size);
 			printf("open %s error\n", strerror(errno));
 			return -1;
 		}
-		if((output_p = malloc(MAX_READ_CHAR)) == NULL)
+		outputSize = base64_decode_for_big_buffer_to_file(p, fd);
+		if(outputSize <= 0)
 		{
-			printf("malloc error: %s\n", strerror(errno));
+			printf("decode error\n");
 			close(fd);
 			munmap(p, file_stat.st_size);
 			return -1;
 		}
-		while(file_size > 0)
-		{
-			if(file_size > MAX_READ_CHAR)
-			{
-				read_n = MAX_READ_CHAR;
-			}
-			else
-			{
-				read_n = file_size;
-			}
-			output_p[0] = '\0';
-			outputSize = base64_decode (save_p, output_p);
-			if(outputSize <= 0)
-			{
-				printf("decode error\n");
-				free(output_p);
-				close(fd);
-				munmap(p, file_stat.st_size);
-				return -1;
-			}
-			save_p += read_n;	
-			file_size -= read_n;
-			write(fd, output_p, outputSize);
-		}
-		free(output_p);
 		close(fd);
 		munmap(p, file_stat.st_size);
 	}
