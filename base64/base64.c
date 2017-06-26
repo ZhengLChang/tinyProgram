@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int isspace (int c)
+int c_isspace (int c)
 {
   switch (c)
     {
@@ -14,14 +14,14 @@ int isspace (int c)
 }
 #define NEXT_CHAR(c, p) do {                    \
   c = (unsigned char) *p++;                     \
-} while (isspace (c))
+} while (c_isspace (c))
 
 #define IS_ASCII(c) (((c) & 0x80) == 0)
 
 ssize_t base64_decode (const char *base64, void *dest);
 size_t base64_encode (const void *data, size_t length, char *dest);
 static unsigned char * base64_decode_lighttpd(char *out, const char *in);
-
+#if 0
 int main(int argc, char *argv)
 {
 	char data[1024] = "ZhengHuijieLoveZhengJIn", dest[1024] = "";
@@ -32,7 +32,7 @@ base64_decode_lighttpd(out_for_lighttpd, dest);
 printf("decode: %s\n", out_for_lighttpd);
 	return 0;
 }
-
+#endif
 size_t base64_encode (const void *data, size_t length, char *dest)
 {
   /* Conversion table.  */
