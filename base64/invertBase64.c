@@ -9,6 +9,8 @@
 #include <errno.h>
 #include "base64.h"
 
+#define MAX_MALLOC_FILE_SIZE (100 * 1024 * 1024)
+#define MAX_READ_CHAR (100 * 1024)
 int main(int argc, char **argv)
 {
 	char *fileName = NULL, *outputFileName = NULL;
@@ -18,7 +20,7 @@ int main(int argc, char **argv)
 	int outputSize = -1;
 	int c;
 	while (1) {
-		char opts[] = "i:o";
+		char opts[] = "i:o:";
 
 		c = getopt(argc, argv, opts);
 		if (c == EOF)
@@ -38,7 +40,7 @@ int main(int argc, char **argv)
 	}
 	if(fileName == NULL || outputFileName == NULL)
 	{
-		printf("usage: %s -f fileName -o outputFileName\n", argv[0]);
+		printf("usage: %s -i fileName -o outputFileName\n", argv[0]);
 		return -1;
 	}
 	if((fd = open(fileName, O_RDONLY)) < 0)
@@ -63,23 +65,79 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	close(fd);
-	if((output_p = malloc(file_stat.st_size)) == NULL)
+	if(file_stat.st_size < MAX_MALLOC_FILE_SIZE)
 	{
-		printf("malloc error: %s\n", strerror(errno));
+		if((output_p = malloc(file_stat.st_size)) == NULL)
+		{
+			printf("malloc error: %s\n", strerror(errno));
+			munmap(p, file_stat.st_size);
+			return -1;
+		}
+		output_p[0] = '\0';
+		outputSize = base64_decode (p, output_p);
+		if(outputSize <= 0)
+		{
+			printf("decode file error\n");
+			free(output_p);
+			munmap(p, file_stat.st_size);
+			return -1;
+		}
 		munmap(p, file_stat.st_size);
-		return -1;
+		printf("after convert, file size: %d\n", outputSize);
+		if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			printf("open %s error\n", strerror(errno));
+			return -1;
+		}
+		write(fd, output_p, outputSize);
+		free(output_p);
+		close(fd);
 	}
-	output_p[0] = '\0';
-	outputSize = base64_decode (p, output_p);
-	munmap(p, file_stat.st_size);
-	printf("after convert, file size: %d\n", outputSize);
-	if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+	else
 	{
-		printf("open error: %s\n", strerror(errno));
-		return -1;
+		int read_n = 0, file_size = file_stat.st_size;
+		char *save_p = p;
+		if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			munmap(p, file_stat.st_size);
+			printf("open %s error\n", strerror(errno));
+			return -1;
+		}
+		if((output_p = malloc(MAX_READ_CHAR)) == NULL)
+		{
+			printf("malloc error: %s\n", strerror(errno));
+			close(fd);
+			munmap(p, file_stat.st_size);
+			return -1;
+		}
+		while(file_size > 0)
+		{
+			if(file_size > MAX_READ_CHAR)
+			{
+				read_n = MAX_READ_CHAR;
+			}
+			else
+			{
+				read_n = file_size;
+			}
+			output_p[0] = '\0';
+			outputSize = base64_decode (save_p, output_p);
+			if(outputSize <= 0)
+			{
+				printf("decode error\n");
+				free(output_p);
+				close(fd);
+				munmap(p, file_stat.st_size);
+				return -1;
+			}
+			save_p += read_n;	
+			file_size -= read_n;
+			write(fd, output_p, outputSize);
+		}
+		free(output_p);
+		close(fd);
+		munmap(p, file_stat.st_size);
 	}
-	write(fd, output_p, outputSize);
-	close(fd);
 	return 0;
 }
 
