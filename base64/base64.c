@@ -258,14 +258,14 @@ ssize_t base64_decode_for_big_buffer_to_file(const char *base64, int fd) {
       *q++ = 0xff & value;
       if(q - cache >= sizeof(cache) - 4)
       {
-	      write(fd, cache, q - cache);
+    	  	  write_all(fd, cache, q - cache);
 	      write_size += q - cache;
 	      q = cache;
       }
     }
   if(q - cache > 0)
       {
-	      write(fd, cache, q - cache);
+	  	  write_all(fd, cache, q - cache);
 	      write_size += q - cache;
 	      q = cache;
       }
@@ -418,7 +418,7 @@ int base64_encode_to_file(const char *in_file, const char *out_file)
 			printf("open %s error\n", strerror(errno));
 			goto ERR;
 		}
-		write(fd, output_p, outputSize);
+		write_all(fd, output_p, outputSize);
 		if(fd != -1)
 		{
 			close(fd);
@@ -454,7 +454,7 @@ int base64_encode_to_file(const char *in_file, const char *out_file)
 			outputSize = base64_encode (save_p, read_n, output_p);
 			save_p += read_n;
 			file_size -= read_n;
-			write(fd, output_p, outputSize);
+			write_all(fd, output_p, outputSize);
 		}
 		if(fd != -1)
 		{
