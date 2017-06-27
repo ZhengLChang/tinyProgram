@@ -13,33 +13,7 @@
 #endif
 
 
-#ifdef WIN32
-/* {{{ win32 stuff */
-# define SHELLENV "ComSpec"
-# define SECURITY_DC , SECURITY_ATTRIBUTES *security
-# define SECURITY_CC , security
-# define pipe(pair) (CreatePipe(&pair[0], &pair[1], security, 2048L) ? 0 : -1)
-static inline HANDLE dup_handle(HANDLE src, BOOL inherit, BOOL closeorig)
-{
-	HANDLE copy, self = GetCurrentProcess();
 
-	if (!DuplicateHandle(self, src, self, &copy, 0, inherit, DUPLICATE_SAME_ACCESS |
-				(closeorig ? DUPLICATE_CLOSE_SOURCE : 0)))
-		return NULL;
-	return copy;
-}
-# define close_descriptor(fd) CloseHandle(fd)
-static void pipe_close_parent(pipe_t *p) {
-	/* don't let the child inherit the parent side of the pipe */
-	p->parent = dup_handle(p->parent, FALSE, TRUE);
-}
-static void pipe_close_child(pipe_t *p) {
-	close_descriptor(p->child);
-	p->fd = _open_osfhandle((long)p->parent,
-			(p->fd == 0 ? O_RDONLY : O_WRONLY)|O_BINARY);
-}
-/* }}} */
-#else /* WIN32 */
 /* {{{ unix way */
 # define SHELLENV "SHELL"
 # define SECURITY_DC
@@ -60,15 +34,11 @@ static void pipe_close_child(pipe_t *p) {
 	p->fd = p->parent;
 }
 /* }}} */
-#endif /* WIN32 */
 
 /* {{{ pipe_close */
 static void pipe_close(pipe_t *p) {
 	close_descriptor(p->parent);
 	close_descriptor(p->child);
-#ifdef WIN32
-	close(p->fd);
-#endif
 }
 /* }}} */
 /* {{{ pipe_open */
@@ -128,85 +98,6 @@ static void proc_close_childs(proc_handler_t *proc) {
 }
 /* }}} */
 
-#ifdef WIN32
-/* {{{ proc_close */
-int proc_close(proc_handler_t *proc) {
-	proc_pid_t child = proc->child;
-	DWORD wstatus;
-
-	proc_close_pipes(proc);
-	WaitForSingleObject(child, INFINITE);
-	GetExitCodeProcess(child, &wstatus);
-	CloseHandle(child);
-
-	return wstatus;
-}
-/* }}} */
-/* {{{ proc_open */
-int proc_open(proc_handler_t *proc, const char *command) {
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	BOOL procok;
-	SECURITY_ATTRIBUTES security;
-	const char *shell = NULL;
-	const char *windir = NULL;
-	buffer *cmdline;
-
-	if (NULL == (shell = getenv(SHELLENV)) &&
-			NULL == (windir = getenv("SystemRoot")) &&
-			NULL == (windir = getenv("windir"))) {
-		fprintf(stderr, "One of %s,%%SystemRoot,%%windir is required", SHELLENV);
-		return -1;
-	}
-
-	/* we use this to allow the child to inherit handles */
-	memset(&security, 0, sizeof(security));
-	security.nLength = sizeof(security);
-	security.bInheritHandle = TRUE;
-	security.lpSecurityDescriptor = NULL;
-
-	if (proc_open_pipes(proc, &security) != 0) {
-		return -1;
-	}
-	proc_close_parents(proc);
-
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = proc->in.child;
-	si.hStdOutput = proc->out.child;
-	si.hStdError = proc->err.child;
-
-	memset(&pi, 0, sizeof(pi));
-
-	cmdline = buffer_init();
-	if (shell) {
-		buffer_append_string(cmdline, shell);
-	} else {
-		buffer_append_string(cmdline, windir);
-		buffer_append_string_len(cmdline, CONST_STR_LEN("\\system32\\cmd.exe"));
-	}
-	buffer_append_string_len(cmdline, CONST_STR_LEN(" /c "));
-	buffer_append_string(cmdline, command);
-	procok = CreateProcess(NULL, cmdline->ptr, &security, &security, TRUE,
-			NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-
-	if (FALSE == procok) {
-		fprintf(stderr, "failed to CreateProcess: %s", cmdline->ptr);
-		buffer_free(cmdline);
-		return -1;
-	}
-	buffer_free(cmdline);
-
-	proc->child = pi.hProcess;
-	CloseHandle(pi.hThread);
-
-	proc_close_childs(proc);
-
-	return 0;
-}
-/* }}} */
-#else /* WIN32 */
 /* {{{ proc_close */
 int proc_close(proc_handler_t *proc) {
 	pid_t child = proc->child;
@@ -270,7 +161,6 @@ int proc_open(proc_handler_t *proc, const char *command) {
 	}
 }
 /* }}} */
-#endif /* WIN32 */
 
 /* {{{ proc_read_fd_to_buffer */
 static void proc_read_fd_to_buffer(int fd, buffer *b) {
@@ -349,11 +239,8 @@ int main() {
 	return __LINE__ - 300; \
 } while (0)
 
-#ifdef WIN32
-#define CMD_CAT "pause"
-#else
+
 #define CMD_CAT "cat"
-#endif
 
 	do {
 		fprintf(stdout, "test: echo 123 without read\n");

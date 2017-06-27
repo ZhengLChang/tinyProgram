@@ -60,7 +60,7 @@ int main(void)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
-	if(getaddrinfo("172.16.0.149", "5859", &hints, &res) != 0)
+	if(getaddrinfo(NULL, "5859", &hints, &res) != 0)
 	{
 		printf("getaddrinfo error: %s\n", gai_strerror(errno));
 		return -1;
@@ -82,7 +82,7 @@ int main(void)
 			printf("recvfrom error: %s\n", strerror(errno));
 			continue;
 		}
-		if(inet_ntop(AF_INET, &addr, dst, sizeof(dst)) == NULL)
+		if(inet_ntop(AF_INET, &addr.sin_addr, dst, sizeof(dst)) == NULL)
 		{
 			printf("inet_ntop error\n", strerror(errno));
 			continue;

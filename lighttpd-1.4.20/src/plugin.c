@@ -13,9 +13,7 @@
 #include <valgrind/valgrind.h>
 #endif
 
-#ifndef __WIN32
 #include <dlfcn.h>
-#endif
 /*
  *
  * if you change this enum to add a new callback, be sure
@@ -101,24 +99,6 @@ static int plugins_register(server *srv, plugin *p) {
  *
  *
  */
-
-#ifdef LIGHTTPD_STATIC
-int plugins_load(server *srv) {
-	plugin *p;
-#define PLUGIN_INIT(x)\
-	p = plugin_init(); \
-	if (x ## _plugin_init(p)) { \
-		log_error_write(srv, __FILE__, __LINE__, "ss", #x, "plugin init failed" ); \
-		plugin_free(p); \
-		return -1;\
-	}\
-	plugins_register(srv, p);
-
-#include "plugin-static.h"
-
-	return 0;
-}
-#else
 int plugins_load(server *srv) {
 	plugin *p;
 	int (*init)(plugin *pl);
@@ -133,11 +113,9 @@ int plugins_load(server *srv) {
 
 		buffer_append_string_len(srv->tmp_buf, CONST_STR_LEN("/"));
 		buffer_append_string(srv->tmp_buf, modules);
-#if defined(__WIN32) || defined(__CYGWIN__)
-		buffer_append_string_len(srv->tmp_buf, CONST_STR_LEN(".dll"));
-#else
+
 		buffer_append_string_len(srv->tmp_buf, CONST_STR_LEN(".so"));
-#endif
+
 
 		p = plugin_init();
 
@@ -154,32 +132,8 @@ int plugins_load(server *srv) {
 		buffer_copy_string(srv->tmp_buf, modules);
 		buffer_append_string_len(srv->tmp_buf, CONST_STR_LEN("_plugin_init"));
 
-#ifdef __WIN32
-		init = GetProcAddress(p->lib, srv->tmp_buf->ptr);
-
-		if (init == NULL)  {
-			LPVOID lpMsgBuf;
-			FormatMessage(
-		        	FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		       		FORMAT_MESSAGE_FROM_SYSTEM,
-		        	NULL,
-		        	GetLastError(),
-		        	MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		        	(LPTSTR) &lpMsgBuf,
-		        	0, NULL );
-
-			log_error_write(srv, __FILE__, __LINE__, "sbs", "getprocaddress failed:", srv->tmp_buf, lpMsgBuf);
-
-			plugin_free(p);
-			return -1;
-		}
-
-#else
-#if 1
 		init = (int (*)(plugin *))(intptr_t)dlsym(p->lib, srv->tmp_buf->ptr);
-#else
-		*(void **)(&init) = dlsym(p->lib, srv->tmp_buf->ptr);
-#endif
+
 		if ((error = dlerror()) != NULL)  {
 			log_error_write(srv, __FILE__, __LINE__, "s", error);
 
@@ -187,7 +141,6 @@ int plugins_load(server *srv) {
 			return -1;
 		}
 
-#endif
 		if ((*init)(p)) {
 			log_error_write(srv, __FILE__, __LINE__, "ss", modules, "plugin init failed" );
 
@@ -202,7 +155,6 @@ int plugins_load(server *srv) {
 
 	return 0;
 }
-#endif
 
 #define PLUGIN_TO_SLOT(x, y) \
 	handler_t plugins_call_##y(server *srv, connection *con) {\
@@ -292,41 +244,6 @@ PLUGIN_TO_SLOT(PLUGIN_FUNC_CLEANUP, cleanup)
 PLUGIN_TO_SLOT(PLUGIN_FUNC_SET_DEFAULTS, set_defaults)
 
 #undef PLUGIN_TO_SLOT
-
-#if 0
-/**
- *
- * special handler
- *
- */
-handler_t plugins_call_handle_fdevent(server *srv, const fd_conn *fdc) {
-	size_t i;
-	plugin **ps;
-
-	ps = srv->plugins.ptr;
-
-	for (i = 0; i < srv->plugins.used; i++) {
-		plugin *p = ps[i];
-		if (p->handle_fdevent) {
-			handler_t r;
-			switch(r = p->handle_fdevent(srv, fdc, p->data)) {
-			case HANDLER_GO_ON:
-				break;
-			case HANDLER_FINISHED:
-			case HANDLER_COMEBACK:
-			case HANDLER_WAIT_FOR_EVENT:
-			case HANDLER_ERROR:
-				return r;
-			default:
-				log_error_write(srv, __FILE__, __LINE__, "d", r);
-				break;
-			}
-		}
-	}
-
-	return HANDLER_GO_ON;
-}
-#endif
 /**
  *
  * - call init function of all plugins to init the plugin-internals

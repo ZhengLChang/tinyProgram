@@ -8,7 +8,7 @@
 #include "sys-socket.h"
 
 const char * inet_ntop_cache_get_ip(server *srv, sock_addr *addr) {
-#ifdef HAVE_IPV6
+//#ifdef HAVE_IPV6
 	size_t ndx = 0, i;
 	for (i = 0; i < INET_NTOP_CACHE_MAX; i++) {
 		if (srv->inet_ntop_cache[i].ts != 0) {
@@ -46,8 +46,8 @@ const char * inet_ntop_cache_get_ip(server *srv, sock_addr *addr) {
 	}
 
 	return srv->inet_ntop_cache[i].b2;
-#else
-	UNUSED(srv);
+//#else
+//	UNUSED(srv);
 	return inet_ntoa(addr->ipv4.sin_addr);
-#endif
+//#endif
 }

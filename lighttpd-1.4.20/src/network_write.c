@@ -61,9 +61,9 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			break;
 		}
 		case FILE_CHUNK: {
-#ifdef USE_MMAP
+
 			char *p = NULL;
-#endif
+
 			ssize_t r;
 			off_t offset;
 			size_t toSend;
@@ -91,7 +91,7 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 				return -1;
 			}
 
-#if defined USE_MMAP
+
 			if (MAP_FAILED == (p = mmap(0, sce->st.st_size, PROT_READ, MAP_SHARED, ifd, 0))) {
 				log_error_write(srv, __FILE__, __LINE__, "ss", "mmap failed: ", strerror(errno));
 
@@ -108,7 +108,7 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			}
 
 			munmap(p, sce->st.st_size);
-#else
+/*
 			buffer_prepare_copy(srv->tmp_buf, toSend);
 
 			lseek(ifd, offset, SEEK_SET);
@@ -125,7 +125,7 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 
 				return -1;
 			}
-#endif
+*/
 			c->offset += r;
 			cq->bytes_out += r;
 

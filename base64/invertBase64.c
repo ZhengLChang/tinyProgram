@@ -9,8 +9,6 @@
 #include <errno.h>
 #include "base64.h"
 
-#define MAX_MALLOC_FILE_SIZE (100 * 1024 * 1024)
-#define MAX_READ_CHAR (100 * 1024)
 int main(int argc, char **argv)
 {
 	char *fileName = NULL, *outputFileName = NULL;
@@ -43,76 +41,7 @@ int main(int argc, char **argv)
 		printf("usage: %s -i fileName -o outputFileName\n", argv[0]);
 		return -1;
 	}
-	if((fd = open(fileName, O_RDONLY)) < 0)
-	{
-		printf("open error: %s\n", strerror(errno));
-		return -1;
-	}
-	if(fstat(fd, &file_stat) < 0)	
-	{
-		printf("fstat error: %s\n", strerror(errno));
-		return -1;
-	}
-	if(file_stat.st_size <= 0)
-	{
-		printf("file is empty\n");
-		return -1;
-	}
-	printf("file size: %d\n", file_stat.st_size);
-	if(MAP_FAILED == (p = mmap(0, file_stat.st_size, PROT_READ, MAP_SHARED, fd, 0)))
-	{
-		printf("mmap error: %s\n", strerror(errno));
-		return -1;
-	}
-	close(fd);
-	if(file_stat.st_size < MAX_MALLOC_FILE_SIZE)
-	{
-		if((output_p = malloc(file_stat.st_size)) == NULL)
-		{
-			printf("malloc error: %s\n", strerror(errno));
-			munmap(p, file_stat.st_size);
-			return -1;
-		}
-		output_p[0] = '\0';
-		outputSize = base64_decode (p, output_p);
-		if(outputSize <= 0)
-		{
-			printf("decode file error\n");
-			free(output_p);
-			munmap(p, file_stat.st_size);
-			return -1;
-		}
-		munmap(p, file_stat.st_size);
-		printf("after convert, file size: %d\n", outputSize);
-		if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
-		{
-			printf("open %s error\n", strerror(errno));
-			return -1;
-		}
-		write(fd, output_p, outputSize);
-		free(output_p);
-		close(fd);
-	}
-	else
-	{
-		if((fd = open(outputFileName, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
-		{
-			munmap(p, file_stat.st_size);
-			printf("open %s error\n", strerror(errno));
-			return -1;
-		}
-		outputSize = base64_decode_for_big_buffer_to_file(p, fd);
-		if(outputSize <= 0)
-		{
-			printf("decode error\n");
-			close(fd);
-			munmap(p, file_stat.st_size);
-			return -1;
-		}
-		close(fd);
-		munmap(p, file_stat.st_size);
-	}
-	return 0;
+	return (base64_decode_to_file(fileName, outputFileName));
 }
 
 

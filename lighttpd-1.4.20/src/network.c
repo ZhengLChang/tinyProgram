@@ -62,7 +62,7 @@ handler_t network_server_handle_fdevent(void *s, void *context, int revents) {
 	}
 	return HANDLER_GO_ON;
 }
-
+/*socket setsockopt bind listen*/
 int network_server_init(server *srv, buffer *host_token, specific_config *s) {
 	int val;
 	socklen_t addr_len;

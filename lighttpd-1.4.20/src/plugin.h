@@ -78,7 +78,7 @@ handler_t plugins_call_connection_reset(server *srv, connection *con);
 handler_t plugins_call_handle_trigger(server *srv);
 handler_t plugins_call_handle_sighup(server *srv);
 
-handler_t plugins_call_init(server *srv);
+handler_t plugins_call_init(server *srv); 	/*done*/
 handler_t plugins_call_set_defaults(server *srv);
 handler_t plugins_call_cleanup(server *srv);
 

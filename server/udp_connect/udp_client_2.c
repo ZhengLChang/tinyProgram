@@ -60,18 +60,19 @@ int main(void)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
-	if(getaddrinfo(NULL/*"172.16.0.148"*/, "5858", &hints, &res) != 0)
+	if(getaddrinfo(NULL, "5858", &hints, &res) != 0)
 	{
 		printf("getaddrinfo error: %s\n", gai_strerror(errno));
 		return -1;
 	}
+	/*
 	if(connect(sock, res->ai_addr, res->ai_addrlen) < 0)	
 	{
 		printf("connect error: %s\n", strerror(errno));
 		close(sock);
 		return -1;
 	}
-
+*/
 #endif
 //	for(; ;)
 	{
@@ -91,11 +92,10 @@ int main(void)
 			return -1;
 			//continue;
 		}
-		if(inet_ntop(AF_INET, &addr, dst, sizeof(dst)) == NULL)
+		if(inet_ntop(AF_INET, &(addr.sin_addr), dst, sizeof(dst)) == NULL)
 		{
 			printf("inet_ntop error\n", strerror(errno));
 			return -1;
-//			continue;
 		}
 		printf("recv from %s, %s\n", dst, buf);
 	}

@@ -325,11 +325,6 @@ static int connection_handle_read(server *srv, connection *con) {
 		return connection_handle_read_ssl(srv, con);
 	}
 
-#if defined(__WIN32)
-	b = chunkqueue_get_append_buffer(con->read_queue);
-	buffer_prepare_copy(b, 4 * 1024);
-	len = recv(con->fd, b->ptr, b->size - 1, 0);
-#else
 	if (ioctl(con->fd, FIONREAD, &toread)) {
 		log_error_write(srv, __FILE__, __LINE__, "sd",
 				"unexpected end-of-file:",
@@ -340,7 +335,7 @@ static int connection_handle_read(server *srv, connection *con) {
 	buffer_prepare_copy(b, toread + 1);
 
 	len = read(con->fd, b->ptr, b->size - 1);
-#endif
+
 
 	if (len < 0) {
 		con->is_readable = 0;

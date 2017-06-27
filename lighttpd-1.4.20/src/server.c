@@ -488,9 +488,6 @@ int main (int argc, char **argv) {
 #ifdef HAVE_SIGACTION
 	struct sigaction act;
 #endif
-#ifdef HAVE_GETRLIMIT
-	struct rlimit rlim;
-#endif
 
 #ifdef USE_ALARM
 	struct itimerval interval;
@@ -513,11 +510,9 @@ int main (int argc, char **argv) {
 	/* init structs done */
 
 	srv->srvconf.port = 0;
-#ifdef HAVE_GETUID
+
 	i_am_root = (getuid() == 0);
-#else
-	i_am_root = 0;
-#endif
+
 	srv->srvconf.dont_daemonize = 0;
 
 	while(-1 != (o = getopt(argc, argv, "f:m:hvVDpt"))) {
@@ -607,7 +602,7 @@ int main (int argc, char **argv) {
 
 		return -1;
 	}
-
+/*插件加载*/
 	if (plugins_load(srv)) {
 		log_error_write(srv, __FILE__, __LINE__, "s",
 				"loading plugins finally failed");
@@ -662,44 +657,6 @@ int main (int argc, char **argv) {
 		struct passwd *pwd = NULL;
 		int use_rlimit = 1;
 
-#ifdef HAVE_VALGRIND_VALGRIND_H
-		if (RUNNING_ON_VALGRIND) use_rlimit = 0;
-#endif
-
-#ifdef HAVE_GETRLIMIT
-		if (0 != getrlimit(RLIMIT_NOFILE, &rlim)) {
-			log_error_write(srv, __FILE__, __LINE__,
-					"ss", "couldn't get 'max filedescriptors'",
-					strerror(errno));
-			return -1;
-		}
-
-		if (use_rlimit && srv->srvconf.max_fds) {
-			/* set rlimits */
-
-			rlim.rlim_cur = srv->srvconf.max_fds;
-			rlim.rlim_max = srv->srvconf.max_fds;
-
-			if (0 != setrlimit(RLIMIT_NOFILE, &rlim)) {
-				log_error_write(srv, __FILE__, __LINE__,
-						"ss", "couldn't set 'max filedescriptors'",
-						strerror(errno));
-				return -1;
-			}
-		}
-
-		if (srv->event_handler == FDEVENT_HANDLER_SELECT) {
-			srv->max_fds = rlim.rlim_cur < FD_SETSIZE - 200 ? rlim.rlim_cur : FD_SETSIZE - 200;
-		} else {
-			srv->max_fds = rlim.rlim_cur;
-		}
-
-		/* set core file rlimit, if enable_cores is set */
-		if (use_rlimit && srv->srvconf.enable_cores && getrlimit(RLIMIT_CORE, &rlim) == 0) {
-			rlim.rlim_cur = rlim.rlim_max;
-			setrlimit(RLIMIT_CORE, &rlim);
-		}
-#endif
 		if (srv->event_handler == FDEVENT_HANDLER_SELECT) {
 			/* don't raise the limit above FD_SET_SIZE */
 			if (srv->max_fds > FD_SETSIZE - 200) {
@@ -710,133 +667,7 @@ int main (int argc, char **argv) {
 			}
 		}
 
-
-#ifdef HAVE_PWD_H
-		/* set user and group */
-		if (srv->srvconf.username->used) {
-			if (NULL == (pwd = getpwnam(srv->srvconf.username->ptr))) {
-				log_error_write(srv, __FILE__, __LINE__, "sb",
-						"can't find username", srv->srvconf.username);
-				return -1;
-			}
-
-			if (pwd->pw_uid == 0) {
-				log_error_write(srv, __FILE__, __LINE__, "s",
-						"I will not set uid to 0\n");
-				return -1;
-			}
-		}
-
-		if (srv->srvconf.groupname->used) {
-			if (NULL == (grp = getgrnam(srv->srvconf.groupname->ptr))) {
-				log_error_write(srv, __FILE__, __LINE__, "sb",
-					"can't find groupname", srv->srvconf.groupname);
-				return -1;
-			}
-			if (grp->gr_gid == 0) {
-				log_error_write(srv, __FILE__, __LINE__, "s",
-						"I will not set gid to 0\n");
-				return -1;
-			}
-		}
-#endif
 		/* we need root-perms for port < 1024 */
-		if (0 != network_init(srv)) {
-			plugins_free(srv);
-			server_free(srv);
-
-			return -1;
-		}
-#ifdef HAVE_PWD_H
-		/* 
-		 * Change group before chroot, when we have access
-		 * to /etc/group
-		 * */
-		if (srv->srvconf.groupname->used) {
-			setgid(grp->gr_gid);
-			setgroups(0, NULL);
-			if (srv->srvconf.username->used) {
-				initgroups(srv->srvconf.username->ptr, grp->gr_gid);
-			}
-		}
-#endif
-#ifdef HAVE_CHROOT
-		if (srv->srvconf.changeroot->used) {
-			tzset();
-
-			if (-1 == chroot(srv->srvconf.changeroot->ptr)) {
-				log_error_write(srv, __FILE__, __LINE__, "ss", "chroot failed: ", strerror(errno));
-				return -1;
-			}
-			if (-1 == chdir("/")) {
-				log_error_write(srv, __FILE__, __LINE__, "ss", "chdir failed: ", strerror(errno));
-				return -1;
-			}
-		}
-#endif
-#ifdef HAVE_PWD_H
-		/* drop root privs */
-		if (srv->srvconf.username->used) {
-			setuid(pwd->pw_uid);
-		}
-#endif
-#if defined(HAVE_SYS_PRCTL_H) && defined(PR_SET_DUMPABLE)
-		/**
-		 * on IRIX 6.5.30 they have prctl() but no DUMPABLE
-		 */
-		if (srv->srvconf.enable_cores) {
-			prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
-		}
-#endif
-	} else {
-
-#ifdef HAVE_GETRLIMIT
-		if (0 != getrlimit(RLIMIT_NOFILE, &rlim)) {
-			log_error_write(srv, __FILE__, __LINE__,
-					"ss", "couldn't get 'max filedescriptors'",
-					strerror(errno));
-			return -1;
-		}
-
-		/**
-		 * we are not root can can't increase the fd-limit, but we can reduce it
-		 */
-		if (srv->srvconf.max_fds && srv->srvconf.max_fds < rlim.rlim_cur) {
-			/* set rlimits */
-
-			rlim.rlim_cur = srv->srvconf.max_fds;
-
-			if (0 != setrlimit(RLIMIT_NOFILE, &rlim)) {
-				log_error_write(srv, __FILE__, __LINE__,
-						"ss", "couldn't set 'max filedescriptors'",
-						strerror(errno));
-				return -1;
-			}
-		}
-
-		if (srv->event_handler == FDEVENT_HANDLER_SELECT) {
-			srv->max_fds = rlim.rlim_cur < FD_SETSIZE - 200 ? rlim.rlim_cur : FD_SETSIZE - 200;
-		} else {
-			srv->max_fds = rlim.rlim_cur;
-		}
-
-		/* set core file rlimit, if enable_cores is set */
-		if (srv->srvconf.enable_cores && getrlimit(RLIMIT_CORE, &rlim) == 0) {
-			rlim.rlim_cur = rlim.rlim_max;
-			setrlimit(RLIMIT_CORE, &rlim);
-		}
-
-#endif
-		if (srv->event_handler == FDEVENT_HANDLER_SELECT) {
-			/* don't raise the limit above FD_SET_SIZE */
-			if (srv->max_fds > FD_SETSIZE - 200) {
-				log_error_write(srv, __FILE__, __LINE__, "sd",
-						"can't raise max filedescriptors above",  FD_SETSIZE - 200,
-						"if event-handler is 'select'. Use 'poll' or something else or reduce server.max-fds.");
-				return -1;
-			}
-		}
-
 		if (0 != network_init(srv)) {
 			plugins_free(srv);
 			server_free(srv);
@@ -1398,10 +1229,6 @@ int main (int argc, char **argv) {
 				context = fdevent_get_context(srv->ev, fd);
 
 				/* connection_handle_fdevent needs a joblist_append */
-#if 0
-				log_error_write(srv, __FILE__, __LINE__, "sdd",
-						"event for", fd, revents);
-#endif
 				switch (r = (*handler)(srv, context, revents)) {
 				case HANDLER_FINISHED:
 				case HANDLER_GO_ON:

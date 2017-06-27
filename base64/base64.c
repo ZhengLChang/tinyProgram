@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 int c_isspace (int c)
 {
@@ -21,6 +27,7 @@ int c_isspace (int c)
 ssize_t base64_decode (const char *base64, void *dest);
 size_t base64_encode (const void *data, size_t length, char *dest);
 static unsigned char * base64_decode_lighttpd(char *out, const char *in);
+ssize_t base64_decode_for_big_buffer_to_file(const char *base64, int fd);
 #if 0
 int main(int argc, char *argv)
 {
@@ -343,5 +350,281 @@ static unsigned char * base64_decode_lighttpd(char *out, const char *in) {
 
 	return result;
 }
+
+/*
+ * when successful return 0 or -1
+ * */
+int base64_encode_to_file(const char *in_file, const char *out_file)
+{
+#undef MAX_MALLOC_FILE_SIZE
+#undef MAX_READ_CHAR
+#define MAX_MALLOC_FILE_SIZE (100 * 1024 * 1024)
+#define MAX_READ_CHAR (100 * 1024)
+	int fd = -1;
+	char *p = NULL, *output_p = NULL;
+	struct stat file_stat;
+	int outputSize = -1;
+
+	if(in_file == NULL || out_file == NULL)
+	{
+		printf("need input file name and outputFileName\n");
+		goto ERR;
+	}
+	if((fd = open(in_file, O_RDONLY)) < 0)
+	{
+		printf("open error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	if(fstat(fd, &file_stat) < 0)
+	{
+		printf("fstat error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	if(file_stat.st_size <= 0)
+	{
+		printf("file is empty\n");
+		goto ERR;
+	}
+	if(!S_ISREG(file_stat.st_mode))
+	{
+		printf("Just support regulal file\n");
+		goto ERR;
+	}
+	if(MAP_FAILED == (p = mmap(0, file_stat.st_size, PROT_READ, MAP_SHARED, fd, 0)))
+	{
+		printf("mmap error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	close(fd);
+	fd = -1; //in case double free
+
+	//to small file
+	if(file_stat.st_size < MAX_MALLOC_FILE_SIZE)
+	{
+		if((output_p = malloc(1.5 * file_stat.st_size)) == NULL)
+		{
+			printf("malloc error: %s\n", strerror(errno));
+			goto ERR;
+		}
+		output_p[0] = '\0';
+		outputSize = base64_encode (p, file_stat.st_size, output_p);
+		if(MAP_FAILED != p && NULL != p)
+		{
+			munmap(p, file_stat.st_size);
+			p = NULL;
+		}
+		if((fd = open(out_file, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			printf("open %s error\n", strerror(errno));
+			goto ERR;
+		}
+		write(fd, output_p, outputSize);
+		if(fd != -1)
+		{
+			close(fd);
+			fd = -1;
+		}
+	}
+	else
+	{
+		int read_n = 0, file_size = file_stat.st_size;
+		char *save_p = p;
+		if((fd = open(out_file, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			printf("open error: %s\n", strerror(errno));
+			goto ERR;
+		}
+		if((output_p = malloc(1.5 * MAX_READ_CHAR)) == NULL)
+		{
+			printf("malloc error: %s\n", strerror(errno));
+			goto ERR;
+		}
+		while(file_size > 0)
+		{
+			if(file_size > MAX_READ_CHAR)
+			{
+				read_n = MAX_READ_CHAR;
+			}
+			else
+			{
+				read_n = file_size;
+			}
+			output_p[0] = '\0';
+			/*multiple of 4*/
+			outputSize = base64_encode (save_p, read_n, output_p);
+			save_p += read_n;
+			file_size -= read_n;
+			write(fd, output_p, outputSize);
+		}
+		if(fd != -1)
+		{
+			close(fd);
+			fd = -1;
+		}
+		if(MAP_FAILED != p && NULL != p)
+		{
+			munmap(p, file_stat.st_size);
+			p = NULL;
+		}
+	}
+	return 0;
+ERR:
+	if(fd != -1)
+	{
+		close(fd);
+		fd = -1;
+	}
+	if(MAP_FAILED != p && NULL != p)
+	{
+		munmap(p, file_stat.st_size);
+		p = NULL;
+	}
+	return -1;
+}
+
+/*
+ * when successful return 0 or -1
+ * */
+int base64_decode_to_file(const char *in_file, const char *out_file)
+{
+#undef MAX_MALLOC_FILE_SIZE
+#undef MAX_READ_CHAR
+#define MAX_MALLOC_FILE_SIZE (100 * 1024 * 1024)
+#define MAX_READ_CHAR (100 * 1024)
+	int fd = -1;
+	char *p = NULL, *output_p = NULL;
+	struct stat file_stat;
+	int outputSize = -1;
+	if(in_file == NULL || out_file == NULL)
+	{
+		return -1;
+	}
+	if((fd = open(in_file, O_RDONLY)) < 0)
+	{
+		printf("open error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	if(fstat(fd, &file_stat) < 0)
+	{
+		printf("fstat error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	if(file_stat.st_size <= 0)
+	{
+		printf("file is empty\n");
+		goto ERR;
+	}
+	if(MAP_FAILED == (p = mmap(0, file_stat.st_size, PROT_READ, MAP_SHARED, fd, 0)))
+	{
+		printf("mmap error: %s\n", strerror(errno));
+		goto ERR;
+	}
+	close(fd);
+	fd = -1;
+
+	if(file_stat.st_size < MAX_MALLOC_FILE_SIZE)
+	{
+		if((output_p = malloc(file_stat.st_size)) == NULL)
+		{
+			printf("malloc error: %s\n", strerror(errno));
+			goto ERR;
+		}
+		output_p[0] = '\0';
+		outputSize = base64_decode (p, output_p);
+		if(outputSize <= 0)
+		{
+			printf("decode file error\n");
+			goto ERR;
+		}
+		if((fd = open(out_file, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			printf("open %s error\n", strerror(errno));
+			goto ERR;
+		}
+		write_all(fd, output_p, outputSize);
+	}
+	else
+	{
+		if((fd = open(out_file, O_RDWR | O_CREAT | O_TRUNC, 0777)) < 0)
+		{
+			printf("open %s error\n", strerror(errno));
+			goto ERR;
+		}
+		outputSize = base64_decode_for_big_buffer_to_file(p, fd);
+		if(outputSize <= 0)
+		{
+			printf("decode error\n");
+			goto ERR;
+		}
+	}
+	if(output_p != NULL)
+	{
+		free(output_p);
+		output_p = NULL;
+	}
+	if(fd != -1)
+	{
+		close(fd);
+		fd = -1;
+	}
+	if(MAP_FAILED != p && NULL != p)
+	{
+		munmap(p, file_stat.st_size);
+		p = NULL;
+	}
+	return 0;
+ERR:
+	if(output_p != NULL)
+	{
+		free(output_p);
+		output_p = NULL;
+	}
+	if(fd != -1)
+	{
+		close(fd);
+		fd = -1;
+	}
+	if(MAP_FAILED != p && NULL != p)
+	{
+		munmap(p, file_stat.st_size);
+		p = NULL;
+	}
+	return -1;
+}
+
+ssize_t write_all(int fd, const void *buf, size_t count)
+{
+	ssize_t written = 0;
+
+	if(count > 0)
+	{
+		ssize_t r = write(fd, buf, count);
+		if(r < 0)
+		{
+			switch(errno)
+			{
+			case EINTR:
+				break;
+			default:
+				return -1;
+			}
+		}
+		else if(0 == r)
+		{
+			errno = EIO;
+			return -1;
+		}
+		else
+		{
+			written += r;
+			buf = r + (char const *)buf;
+			count -= r;
+		}
+	}
+	return written;
+}
+
+
+
 
 

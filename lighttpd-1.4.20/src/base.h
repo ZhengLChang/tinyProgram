@@ -306,17 +306,17 @@ typedef struct {
 /* the order of the items should be the same as they are processed
  * read before write as we use this later */
 typedef enum {
-	CON_STATE_CONNECT,
-	CON_STATE_REQUEST_START,
-	CON_STATE_READ,
-	CON_STATE_REQUEST_END,
-	CON_STATE_READ_POST,
-	CON_STATE_HANDLE_REQUEST,
-	CON_STATE_RESPONSE_START,
-	CON_STATE_WRITE,
-	CON_STATE_RESPONSE_END,
-	CON_STATE_ERROR,
-	CON_STATE_CLOSE
+	CON_STATE_CONNECT, /*connect: waiting for a connection*/
+	CON_STATE_REQUEST_START, /*reqstart: init the read-idle timer*/
+	CON_STATE_READ, /*read: read http-request-header from network*/
+	CON_STATE_REQUEST_END, /*reqend: parse request*/
+	CON_STATE_READ_POST, /*readpost: read http-request-content from network*/
+	CON_STATE_HANDLE_REQUEST, /*handlereq: handle the request internally (might result in sub-requests)*/
+	CON_STATE_RESPONSE_START, /*respstart: prepare response header*/
+	CON_STATE_WRITE, /*write: write response-header + content to network*/
+	CON_STATE_RESPONSE_END, /*respend: cleanup environment, log request*/
+	CON_STATE_ERROR, /*error: reset connection (incl. close())*/
+	CON_STATE_CLOSE /*close: close connection (handle lingering close)*/
 } connection_state_t;
 
 typedef enum { COND_RESULT_UNSET, COND_RESULT_FALSE, COND_RESULT_TRUE } cond_result_t;
@@ -502,7 +502,7 @@ typedef struct {
 typedef struct {
 	sock_addr addr;
 	int       fd;
-	int       fde_ndx;
+	int       fde_ndx; /* -1表示未注册到I/O复用中*/
 
 	buffer *ssl_pemfile;
 	buffer *ssl_ca_file;
