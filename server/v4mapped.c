@@ -14,11 +14,11 @@ int main(void)
 
 	memset(&hints, 0, sizeof(hints));
 
-	hints.ai_flags = AI_V4MAPPED;
+	//hints.ai_flags = AI_V4MAPPED;
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	if(0 != getaddrinfo("127.0.0.1", NULL, &hints, &res))
+	if(0 != getaddrinfo(NULL, "8080", &hints, &res))
 	{
 		printf("getaddrinfo error: %s\n", strerror(errno));
 		return -1;

@@ -483,7 +483,7 @@ void setup_receive(int usd, unsigned int interface, short port)
 		    exit(1);
 		}
 	}
-	listen(usd,3);
+//	listen(usd,3); not tcp
 }
 
 char *print_string_addr(sockaddr_u sa_rcvr, char *str_buf)

@@ -616,7 +616,10 @@ static handler_t cgi_handle_fdevent(void *s, void *ctx, int revents) {
 
 		return HANDLER_ERROR;
 	}
-
+	if(hctx->plugin_data->cgi_pid.used > 0)
+	{
+		return HANDLER_ERROR;
+	}
 	if (revents & FDEVENT_IN) {
 		switch (cgi_demux_response(srv, hctx)) {
 		case FDEVENT_HANDLED_NOT_FINISHED:

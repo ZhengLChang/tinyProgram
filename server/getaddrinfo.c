@@ -18,13 +18,16 @@ int main(int argc, char **argv)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 #endif
-#if 0
-	hints.ai_flags = AI_CANONNAME;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+#if 1
+//	hints.ai_flags = AI_CANONNAME;
+//	hints.ai_family = AF_INET6;
+	hints.ai_family = AF_INET6;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_socktype = SOCK_DGRAM;
+//	hints.ai_socktype = SOCK_STREAM;
+//	hints.ai_protocol = IPPROTO_TCP;
 #endif
-	if(0 != (r = getaddrinfo(NULL/*"www.baidu.com"*/, "53", &hints, &res)))
+	if(0 != (r = getaddrinfo(NULL, "0", &hints, &res)))
 	{
 		printf("getaddrinfo error: %s\n", gai_strerror(r));
 		return -1;
