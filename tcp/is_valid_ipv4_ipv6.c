@@ -25,7 +25,7 @@ int main(void)
 {
 	printf("%d\n", is_valid_ipv4(""));
 	printf("%d\n", is_valid_ipv4("122"));
-	printf("%d\n", is_valid_ipv4("122.1.1.1"));
+	printf("%d\n", is_valid_ipv4("122.1.1.1:11"));
 	printf("%d\n", is_valid_ipv6("fec0::da24:bdff:fe76:cea2"));
 	return 0;
 }
