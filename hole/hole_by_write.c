@@ -10,13 +10,13 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define OFFSET_LEN (1024 *1024 * 1024)
+#define OFFSET_LEN (10 * 1024 * 1024)
 #define CONST_STR_LEN(x) x, x ? sizeof(x) - 1: 0
 int main(void)
 {
 	int fd = -1, i = 0;
 	char buf[1024] = "";
-	memset(buf, '\0', sizeof(buf));
+	memset(buf, 'a', sizeof(buf));
 	if((fd = open("./hole_by_write.txt", O_CREAT | O_TRUNC | O_CLOEXEC | O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0)
 	{
 		printf("open error: %s\n", strerror(errno));
