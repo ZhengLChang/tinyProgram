@@ -23,6 +23,7 @@
 #define HAVE_DUP2 1
 
 /* Define to 1 if you have the `epoll_ctl' function. */
+#define HAVE_EPOLL_CTL 1
 
 /* Define to 1 if you have the <errmsg.h> header file. */
 /* #undef HAVE_ERRMSG_H */
@@ -112,7 +113,7 @@
 #define HAVE_LIBPCRE 1
 
 /* Have libssl */
-/* #undef HAVE_LIBSSL */
+#define HAVE_LIBSSL 
 
 /* libxml2 */
 /* #undef HAVE_LIBXML2 */
@@ -166,7 +167,7 @@
 #define HAVE_NETINET_IN_H 1
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
-/* #undef HAVE_OPENSSL_SSL_H */
+#define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the `pathconf' function. */
 #define HAVE_PATHCONF 1
@@ -175,6 +176,7 @@
 #define HAVE_PCRE_H 1
 
 /* Define to 1 if you have the `poll' function. */
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
@@ -216,6 +218,7 @@
 #define HAVE_SIGNAL 1
 
 /* Define to 1 if you have the `sigtimedwait' function. */
+#define HAVE_SIGTIMEDWAIT 1
 
 /* Define to 1 if you have the `socket' function. */
 #define HAVE_SOCKET 1

@@ -28,14 +28,7 @@ Corresponding Source for a non-source form of such a combination
 shall include the source code for the parts of OpenSSL used as well
 as that of the covered work.  */
 
-//#include "wget.h"
-
 #include "gen-md5.h"
-
-#ifdef HAVE_BUILTIN_MD5
-# include <md5.h>
-typedef struct md5_ctx gen_md5_context_imp;
-#endif
 
 # include <openssl/md5.h>
 typedef MD5_CTX gen_md5_context_imp;
@@ -61,17 +54,7 @@ gen_md5_init (gen_md5_context *ctx)
 {
   gen_md5_context_imp *ctx_imp = &ctx->imp;
 
-#ifdef HAVE_BUILTIN_MD5
-  md5_init_ctx (ctx_imp);
-#endif
-
-#ifdef HAVE_SOLARIS_MD5
-  MD5Init (ctx_imp);
-#endif
-
-#ifdef HAVE_OPENSSL_MD5
   MD5_Init (ctx_imp);
-#endif
 }
 
 void
@@ -79,17 +62,7 @@ gen_md5_update (unsigned const char *buffer, int len, gen_md5_context *ctx)
 {
   gen_md5_context_imp *ctx_imp = &ctx->imp;
 
-#ifdef HAVE_BUILTIN_MD5
-  md5_process_bytes (buffer, len, ctx_imp);
-#endif
-
-#ifdef HAVE_SOLARIS_MD5
-  MD5Update (ctx_imp, (unsigned char *)buffer, len);
-#endif
-
-#ifdef HAVE_OPENSSL_MD5
   MD5_Update (ctx_imp, buffer, len);
-#endif
 }
 
 void
@@ -97,17 +70,7 @@ gen_md5_finish (gen_md5_context *ctx, unsigned char *result)
 {
   gen_md5_context_imp *ctx_imp = &ctx->imp;
 
-#ifdef HAVE_BUILTIN_MD5
-  md5_finish_ctx (ctx_imp, result);
-#endif
-
-#ifdef HAVE_SOLARIS_MD5
-  MD5Final (result, ctx_imp);
-#endif
-
-#ifdef HAVE_OPENSSL_MD5
   MD5_Final (result, ctx_imp);
-#endif
 }
 
 #if 0

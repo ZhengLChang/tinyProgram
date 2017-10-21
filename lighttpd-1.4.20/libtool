@@ -332,7 +332,7 @@ link_all_deplibs=unknown
 sys_lib_search_path_spec="/usr/lib/gcc/i686-redhat-linux/4.4.7 /usr/lib /lib"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/mysql /usr/lib/qt-3.3/lib /usr/lib/vmware-tools/lib32/libvmGuestLib.so /usr/lib/vmware-tools/lib64/libvmGuestLib.so /usr/lib/vmware-tools/lib32/libvmGuestLibJava.so /usr/lib/vmware-tools/lib64/libvmGuestLibJava.so /usr/lib/vmware-tools/lib32/libDeployPkg.so /usr/lib/vmware-tools/lib64/libDeployPkg.so /usr/lib/xulrunner "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/mysql /usr/lib/qt-3.3/lib /usr/lib/xulrunner "
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""

@@ -4,7 +4,7 @@
 /* First off, code is include which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
-#line 5 "./configparser.y"
+#line 5 "configparser.y"
 
 #include <assert.h>
 #include <stdio.h>
@@ -233,54 +233,54 @@ typedef union {
 **  yy_default[]       Default action for each state.
 */
 static YYACTIONTYPE yy_action[] = {
- /*     0 */     2,    3,    4,    5,   13,   14,   63,   15,    7,   45,
- /*    10 */    20,   88,   16,   46,   28,   49,   41,   10,   40,   25,
- /*    20 */    22,   50,   46,    8,   15,  104,    1,   20,   28,   18,
- /*    30 */    58,   60,    6,   25,   22,   40,   47,   62,   11,   46,
- /*    40 */    20,    9,   23,   24,   26,   29,   89,   58,   60,   10,
- /*    50 */    17,   38,   28,   27,   37,   19,   30,   25,   22,   34,
- /*    60 */    15,  100,   20,   20,   23,   24,   26,   12,   19,   31,
- /*    70 */    32,   40,   19,   44,   43,   46,   95,   35,   90,   89,
- /*    80 */    28,   49,   42,   58,   60,   25,   22,   59,   28,   27,
- /*    90 */    33,   48,   52,   25,   22,   34,   28,   49,   51,   28,
- /*   100 */    36,   25,   22,   61,   25,   22,   89,   28,   39,   89,
- /*   110 */    89,   89,   25,   22,   54,   55,   56,   57,   89,   28,
- /*   120 */    53,   21,   89,   89,   25,   22,   25,   22,
+ /*     0 */     2,    3,    4,    5,   13,   14,  104,    1,   21,   45,
+ /*    10 */    17,   38,   16,   25,   22,   19,   41,   10,   28,   27,
+ /*    20 */    37,  100,   30,   25,   22,   34,   15,   28,   18,   20,
+ /*    30 */    52,   15,   25,   22,   20,    9,   11,   40,   19,   62,
+ /*    40 */     7,   46,   40,   10,   44,   48,   46,   63,   15,   58,
+ /*    50 */    60,   20,   28,   53,   58,   60,   51,   25,   22,   40,
+ /*    60 */    88,   28,   49,   46,   28,   39,   25,   22,   50,   25,
+ /*    70 */    22,   58,   60,   28,   27,   33,   19,   12,   25,   22,
+ /*    80 */    34,   31,   32,   20,   95,   23,   24,   26,   29,   35,
+ /*    90 */    28,   49,   47,   43,   42,   25,   22,   59,   28,   49,
+ /*   100 */     6,   28,   36,   25,   22,   61,   25,   22,   20,   46,
+ /*   110 */    23,   24,   26,   90,   89,   89,   54,   55,   56,   57,
+ /*   120 */     8,
 };
 static YYCODETYPE yy_lookahead[] = {
- /*     0 */    29,   30,   31,   32,   33,   34,    0,    1,   44,   38,
- /*    10 */     4,   15,   41,   16,   35,   36,   45,   46,   12,   40,
- /*    20 */    41,   42,   16,   15,    1,   27,   28,    4,   35,   36,
- /*    30 */    24,   25,    1,   40,   41,   12,   17,   14,   13,   16,
- /*    40 */     4,   38,    6,    7,    8,    9,   15,   24,   25,   46,
- /*    50 */     2,    3,   35,   36,   37,    5,   39,   40,   41,   42,
- /*    60 */     1,   11,    4,    4,    6,    7,    8,   28,    5,    9,
- /*    70 */    10,   12,    5,   14,   28,   16,   13,   11,   13,   47,
- /*    80 */    35,   36,   13,   24,   25,   40,   41,   42,   35,   36,
- /*    90 */    37,   18,   43,   40,   41,   42,   35,   36,   19,   35,
- /*   100 */    36,   40,   41,   42,   40,   41,   47,   35,   36,   47,
- /*   110 */    47,   47,   40,   41,   20,   21,   22,   23,   47,   35,
- /*   120 */    36,   35,   47,   47,   40,   41,   40,   41,
+ /*     0 */    29,   30,   31,   32,   33,   34,   27,   28,   35,   38,
+ /*    10 */     2,    3,   41,   40,   41,    5,   45,   46,   35,   36,
+ /*    20 */    37,   11,   39,   40,   41,   42,    1,   35,   36,    4,
+ /*    30 */    43,    1,   40,   41,    4,   38,   13,   12,    5,   14,
+ /*    40 */    44,   16,   12,   46,   14,   18,   16,    0,    1,   24,
+ /*    50 */    25,    4,   35,   36,   24,   25,   19,   40,   41,   12,
+ /*    60 */    15,   35,   36,   16,   35,   36,   40,   41,   42,   40,
+ /*    70 */    41,   24,   25,   35,   36,   37,    5,   28,   40,   41,
+ /*    80 */    42,    9,   10,    4,   13,    6,    7,    8,    9,   11,
+ /*    90 */    35,   36,   17,   28,   13,   40,   41,   42,   35,   36,
+ /*   100 */     1,   35,   36,   40,   41,   42,   40,   41,    4,   16,
+ /*   110 */     6,    7,    8,   13,   15,   47,   20,   21,   22,   23,
+ /*   120 */    15,
 };
-#define YY_SHIFT_USE_DFLT (-5)
+#define YY_SHIFT_USE_DFLT (-1)
 static signed char yy_shift_ofst[] = {
- /*     0 */    -5,    6,   -5,   -5,   -5,   31,   -4,    8,   -3,   -5,
- /*    10 */    25,   -5,   23,   -5,   -5,   -5,   48,   58,   67,   58,
- /*    20 */    -5,   -5,   -5,   -5,   -5,   -5,   36,   50,   -5,   -5,
- /*    30 */    60,   -5,   58,   -5,   66,   58,   67,   -5,   58,   67,
- /*    40 */    65,   69,   -5,   59,   -5,   -5,   19,   73,   58,   67,
- /*    50 */    79,   94,   58,   63,   -5,   -5,   -5,   -5,   58,   -5,
- /*    60 */    58,   -5,   -5,
+ /*     0 */    -1,   47,   -1,   -1,   -1,   99,   45,  105,   93,   -1,
+ /*    10 */    23,   -1,   25,   -1,   -1,   -1,    8,  104,   33,  104,
+ /*    20 */    -1,   -1,   -1,   -1,   -1,   -1,   79,   10,   -1,   -1,
+ /*    30 */    72,   -1,  104,   -1,   78,  104,   33,   -1,  104,   33,
+ /*    40 */   100,   81,   -1,   30,   -1,   -1,   75,   27,  104,   33,
+ /*    50 */    37,   96,  104,   71,   -1,   -1,   -1,   -1,  104,   -1,
+ /*    60 */   104,   -1,   -1,
 };
-#define YY_REDUCE_USE_DFLT (-37)
+#define YY_REDUCE_USE_DFLT (-30)
 static signed char yy_reduce_ofst[] = {
- /*     0 */    -2,  -29,  -37,  -37,  -37,  -36,  -37,  -37,    3,  -37,
- /*    10 */   -37,   39,  -29,  -37,  -37,  -37,  -37,   -7,  -37,   86,
- /*    20 */   -37,  -37,  -37,  -37,  -37,  -37,   17,  -37,  -37,  -37,
- /*    30 */   -37,  -37,   53,  -37,  -37,   64,  -37,  -37,   72,  -37,
- /*    40 */   -37,  -37,   46,  -29,  -37,  -37,  -37,  -37,  -21,  -37,
- /*    50 */   -37,   49,   84,  -37,  -37,  -37,  -37,  -37,   45,  -37,
- /*    60 */    61,  -37,  -37,
+ /*     0 */   -21,  -29,  -30,  -30,  -30,   -4,  -30,  -30,   -3,  -30,
+ /*    10 */   -30,   49,  -29,  -30,  -30,  -30,  -30,   -8,  -30,  -27,
+ /*    20 */   -30,  -30,  -30,  -30,  -30,  -30,  -17,  -30,  -30,  -30,
+ /*    30 */   -30,  -30,   38,  -30,  -30,   66,  -30,  -30,   29,  -30,
+ /*    40 */   -30,  -30,   65,  -29,  -30,  -30,  -30,  -30,   26,  -30,
+ /*    50 */   -30,  -13,   17,  -30,  -30,  -30,  -30,  -30,   55,  -30,
+ /*    60 */    63,  -30,  -30,
 };
 static YYACTIONTYPE yy_default[] = {
  /*     0 */    65,  103,   64,   66,   67,  103,   68,  103,  103,   92,
@@ -516,42 +516,42 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 23:
     case 24:
     case 25:
-#line 146 "./configparser.y"
+#line 146 "configparser.y"
 { buffer_free((yypminor->yy0)); }
 #line 521 "configparser.c"
       break;
     case 35:
-#line 137 "./configparser.y"
+#line 137 "configparser.y"
 { (yypminor->yy41)->free((yypminor->yy41)); }
 #line 526 "configparser.c"
       break;
     case 36:
-#line 138 "./configparser.y"
+#line 138 "configparser.y"
 { (yypminor->yy41)->free((yypminor->yy41)); }
 #line 531 "configparser.c"
       break;
     case 37:
-#line 139 "./configparser.y"
+#line 139 "configparser.y"
 { (yypminor->yy41)->free((yypminor->yy41)); }
 #line 536 "configparser.c"
       break;
     case 39:
-#line 140 "./configparser.y"
+#line 140 "configparser.y"
 { array_free((yypminor->yy40)); }
 #line 541 "configparser.c"
       break;
     case 40:
-#line 141 "./configparser.y"
+#line 141 "configparser.y"
 { array_free((yypminor->yy40)); }
 #line 546 "configparser.c"
       break;
     case 41:
-#line 142 "./configparser.y"
+#line 142 "configparser.y"
 { buffer_free((yypminor->yy43)); }
 #line 551 "configparser.c"
       break;
     case 42:
-#line 143 "./configparser.y"
+#line 143 "configparser.y"
 { buffer_free((yypminor->yy43)); }
 #line 556 "configparser.c"
       break;
@@ -821,7 +821,7 @@ static void yy_reduce(
         /* No destructor defined for global */
         break;
       case 5:
-#line 119 "./configparser.y"
+#line 119 "configparser.y"
 { yymsp[-1].minor.yy78 = NULL; }
 #line 826 "configparser.c"
   yy_destructor(1,&yymsp[0].minor);
@@ -836,7 +836,7 @@ static void yy_reduce(
   yy_destructor(1,&yymsp[0].minor);
         break;
       case 9:
-#line 148 "./configparser.y"
+#line 148 "configparser.y"
 {
   if (ctx->ok) {
     buffer_copy_string_buffer(yymsp[0].minor.yy41->key, yymsp[-2].minor.yy43);
@@ -864,7 +864,7 @@ static void yy_reduce(
   yy_destructor(2,&yymsp[-1].minor);
         break;
       case 10:
-#line 172 "./configparser.y"
+#line 172 "configparser.y"
 {
   array *vars = ctx->current->value;
   data_unset *du;
@@ -908,7 +908,7 @@ static void yy_reduce(
   yy_destructor(3,&yymsp[-1].minor);
         break;
       case 11:
-#line 212 "./configparser.y"
+#line 212 "configparser.y"
 {
   if (strchr(yymsp[0].minor.yy0->ptr, '.') == NULL) {
     yygotominor.yy43 = buffer_init_string("var.");
@@ -923,7 +923,7 @@ static void yy_reduce(
 #line 923 "configparser.c"
         break;
       case 12:
-#line 224 "./configparser.y"
+#line 224 "configparser.y"
 {
   yygotominor.yy41 = configparser_merge_data(yymsp[-2].minor.yy41, yymsp[0].minor.yy41);
   if (NULL == yygotominor.yy41) {
@@ -937,7 +937,7 @@ static void yy_reduce(
   yy_destructor(5,&yymsp[-1].minor);
         break;
       case 13:
-#line 234 "./configparser.y"
+#line 234 "configparser.y"
 {
   yygotominor.yy41 = yymsp[0].minor.yy41;
   yymsp[0].minor.yy41 = NULL;
@@ -945,7 +945,7 @@ static void yy_reduce(
 #line 945 "configparser.c"
         break;
       case 14:
-#line 239 "./configparser.y"
+#line 239 "configparser.y"
 {
   yygotominor.yy41 = NULL;
   if (strncmp(yymsp[0].minor.yy43->ptr, "env.", sizeof("env.") - 1) == 0) {
@@ -975,7 +975,7 @@ static void yy_reduce(
 #line 975 "configparser.c"
         break;
       case 15:
-#line 266 "./configparser.y"
+#line 266 "configparser.y"
 {
   yygotominor.yy41 = (data_unset *)data_string_init();
   buffer_copy_string_buffer(((data_string *)(yygotominor.yy41))->value, yymsp[0].minor.yy0);
@@ -985,7 +985,7 @@ static void yy_reduce(
 #line 985 "configparser.c"
         break;
       case 16:
-#line 273 "./configparser.y"
+#line 273 "configparser.y"
 {
   yygotominor.yy41 = (data_unset *)data_integer_init();
   ((data_integer *)(yygotominor.yy41))->value = strtol(yymsp[0].minor.yy0->ptr, NULL, 10);
@@ -995,7 +995,7 @@ static void yy_reduce(
 #line 995 "configparser.c"
         break;
       case 17:
-#line 279 "./configparser.y"
+#line 279 "configparser.y"
 {
   yygotominor.yy41 = (data_unset *)data_array_init();
   array_free(((data_array *)(yygotominor.yy41))->value);
@@ -1005,7 +1005,7 @@ static void yy_reduce(
 #line 1005 "configparser.c"
         break;
       case 18:
-#line 285 "./configparser.y"
+#line 285 "configparser.y"
 {
   yygotominor.yy40 = array_init();
 }
@@ -1014,7 +1014,7 @@ static void yy_reduce(
   yy_destructor(9,&yymsp[0].minor);
         break;
       case 19:
-#line 288 "./configparser.y"
+#line 288 "configparser.y"
 {
   yygotominor.yy40 = yymsp[-1].minor.yy40;
   yymsp[-1].minor.yy40 = NULL;
@@ -1024,7 +1024,7 @@ static void yy_reduce(
   yy_destructor(9,&yymsp[0].minor);
         break;
       case 20:
-#line 293 "./configparser.y"
+#line 293 "configparser.y"
 {
   if (buffer_is_empty(yymsp[0].minor.yy41->key) ||
       NULL == array_get_element(yymsp[-2].minor.yy40, yymsp[0].minor.yy41->key->ptr)) {
@@ -1045,7 +1045,7 @@ static void yy_reduce(
   yy_destructor(10,&yymsp[-1].minor);
         break;
       case 21:
-#line 310 "./configparser.y"
+#line 310 "configparser.y"
 {
   yygotominor.yy40 = yymsp[-1].minor.yy40;
   yymsp[-1].minor.yy40 = NULL;
@@ -1054,7 +1054,7 @@ static void yy_reduce(
   yy_destructor(10,&yymsp[0].minor);
         break;
       case 22:
-#line 315 "./configparser.y"
+#line 315 "configparser.y"
 {
   yygotominor.yy40 = array_init();
   array_insert_unique(yygotominor.yy40, yymsp[0].minor.yy41);
@@ -1063,7 +1063,7 @@ static void yy_reduce(
 #line 1063 "configparser.c"
         break;
       case 23:
-#line 321 "./configparser.y"
+#line 321 "configparser.y"
 {
   yygotominor.yy41 = yymsp[0].minor.yy41;
   yymsp[0].minor.yy41 = NULL;
@@ -1071,7 +1071,7 @@ static void yy_reduce(
 #line 1071 "configparser.c"
         break;
       case 24:
-#line 325 "./configparser.y"
+#line 325 "configparser.y"
 {
   buffer_copy_string_buffer(yymsp[0].minor.yy41->key, yymsp[-2].minor.yy43);
   buffer_free(yymsp[-2].minor.yy43);
@@ -1089,7 +1089,7 @@ static void yy_reduce(
       case 26:
         break;
       case 27:
-#line 337 "./configparser.y"
+#line 337 "configparser.y"
 {
   data_config *dc;
   dc = (data_config *)array_get_element(ctx->srv->config_context, "global");
@@ -1100,7 +1100,7 @@ static void yy_reduce(
   yy_destructor(12,&yymsp[0].minor);
         break;
       case 28:
-#line 344 "./configparser.y"
+#line 344 "configparser.y"
 {
   data_config *cur;
 
@@ -1118,7 +1118,7 @@ static void yy_reduce(
   yy_destructor(14,&yymsp[0].minor);
         break;
       case 29:
-#line 355 "./configparser.y"
+#line 355 "configparser.y"
 {
   assert(yymsp[-3].minor.yy78->context_ndx < yymsp[0].minor.yy78->context_ndx);
   yymsp[0].minor.yy78->prev = yymsp[-3].minor.yy78;
@@ -1132,7 +1132,7 @@ static void yy_reduce(
   yy_destructor(15,&yymsp[-1].minor);
         break;
       case 30:
-#line 364 "./configparser.y"
+#line 364 "configparser.y"
 {
   yygotominor.yy78 = yymsp[0].minor.yy78;
   yymsp[0].minor.yy78 = NULL;
@@ -1140,7 +1140,7 @@ static void yy_reduce(
 #line 1140 "configparser.c"
         break;
       case 31:
-#line 369 "./configparser.y"
+#line 369 "configparser.y"
 {
   data_config *cur;
 
@@ -1158,7 +1158,7 @@ static void yy_reduce(
   yy_destructor(14,&yymsp[0].minor);
         break;
       case 32:
-#line 380 "./configparser.y"
+#line 380 "configparser.y"
 {
   data_config *dc;
   buffer *b, *rvalue, *op;
@@ -1305,7 +1305,7 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-2].minor);
         break;
       case 33:
-#line 520 "./configparser.y"
+#line 520 "configparser.y"
 {
   yygotominor.yy27 = CONFIG_COND_EQ;
 }
@@ -1313,7 +1313,7 @@ static void yy_reduce(
   yy_destructor(20,&yymsp[0].minor);
         break;
       case 34:
-#line 523 "./configparser.y"
+#line 523 "configparser.y"
 {
   yygotominor.yy27 = CONFIG_COND_MATCH;
 }
@@ -1321,7 +1321,7 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[0].minor);
         break;
       case 35:
-#line 526 "./configparser.y"
+#line 526 "configparser.y"
 {
   yygotominor.yy27 = CONFIG_COND_NE;
 }
@@ -1329,7 +1329,7 @@ static void yy_reduce(
   yy_destructor(22,&yymsp[0].minor);
         break;
       case 36:
-#line 529 "./configparser.y"
+#line 529 "configparser.y"
 {
   yygotominor.yy27 = CONFIG_COND_NOMATCH;
 }
@@ -1337,7 +1337,7 @@ static void yy_reduce(
   yy_destructor(23,&yymsp[0].minor);
         break;
       case 37:
-#line 533 "./configparser.y"
+#line 533 "configparser.y"
 {
   yygotominor.yy43 = NULL;
   if (ctx->ok) {
@@ -1357,7 +1357,7 @@ static void yy_reduce(
 #line 1357 "configparser.c"
         break;
       case 38:
-#line 550 "./configparser.y"
+#line 550 "configparser.y"
 {
   if (ctx->ok) {
     if (0 != config_parse_file(ctx->srv, ctx, yymsp[0].minor.yy43->ptr)) {
@@ -1371,7 +1371,7 @@ static void yy_reduce(
   yy_destructor(24,&yymsp[-1].minor);
         break;
       case 39:
-#line 560 "./configparser.y"
+#line 560 "configparser.y"
 {
   if (ctx->ok) {
     if (0 != config_parse_cmd(ctx->srv, ctx, yymsp[0].minor.yy43->ptr)) {
@@ -1411,7 +1411,7 @@ static void yy_parse_failed(
   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
-#line 110 "./configparser.y"
+#line 110 "configparser.y"
 
   ctx->ok = 0;
 

@@ -133,7 +133,26 @@ typedef struct fdevents {
 	fdnode **fdarray;
 	size_t maxfds;
 
+#ifdef USE_LINUX_SIGIO
+	int in_sigio;
+	int signum;
+	sigset_t sigset;
+	siginfo_t siginfo;
+	bitset *sigbset;
+#endif
+#ifdef USE_LINUX_EPOLL
+	int epoll_fd;
+	struct epoll_event *epoll_events;
+#endif
+#ifdef USE_POLL
+	struct pollfd *pollfds;
 
+	size_t size;
+	size_t used;
+
+	buffer_int unused;
+#endif
+#ifdef USE_SELECT
 	fd_set select_read;
 	fd_set select_write;
 	fd_set select_error;
@@ -143,8 +162,19 @@ typedef struct fdevents {
 	fd_set select_set_error;
 
 	int select_max_fd;
-
-
+#endif
+#ifdef USE_SOLARIS_DEVPOLL
+	int devpoll_fd;
+	struct pollfd *devpollfds;
+#endif
+#ifdef USE_FREEBSD_KQUEUE
+	int kq_fd;
+	struct kevent *kq_results;
+	bitset *kq_bevents;
+#endif
+#ifdef USE_SOLARIS_PORT
+	int port_fd;
+#endif
 	int (*reset)(struct fdevents *ev);
 	void (*free)(struct fdevents *ev);
 
@@ -188,4 +218,5 @@ int fdevent_solaris_devpoll_init(fdevents *ev);
 int fdevent_freebsd_kqueue_init(fdevents *ev);
 
 #endif
+
 

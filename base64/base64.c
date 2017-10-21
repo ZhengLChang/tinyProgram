@@ -351,6 +351,8 @@ static unsigned char * base64_decode_lighttpd(char *out, const char *in) {
 	return result;
 }
 
+int base64_encode_to_file(const char *in_file, const char *out_file)
+
 /*
  * when successful return 0 or -1
  * */
@@ -512,6 +514,10 @@ int base64_decode_to_file(const char *in_file, const char *out_file)
 	if(file_stat.st_size <= 0)
 	{
 		printf("file is empty\n");
+		goto ERR;
+	}
+	if(!S_ISREG(file_stat.st_mode))
+	{
 		goto ERR;
 	}
 	if(MAP_FAILED == (p = mmap(0, file_stat.st_size, PROT_READ, MAP_SHARED, fd, 0)))

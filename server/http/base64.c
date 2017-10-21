@@ -258,7 +258,7 @@ ssize_t base64_decode_for_big_buffer_to_file(const char *base64, int fd) {
       *q++ = 0xff & value;
       if(q - cache >= sizeof(cache) - 4)
       {
-    	  	  write_all(fd, cache, q - cache);
+		  write_all(fd, (void *)cache, (size_t)(q - cache));
 	      write_size += q - cache;
 	      q = cache;
       }

@@ -1,4 +1,5 @@
 /*
+ *gcc httpRequest.c  gen-md5.c base64.c -l crypto
  *usage: ./a.out www.baidu.com http
 	./a.out http://www.baidu.com/index.html http 
  * */
@@ -16,6 +17,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <fcntl.h>
 #include "md5.h"
 #include "gen-md5.h"
 
@@ -851,6 +853,27 @@ struct url *url_parse (const char *url, int *error_number)
 	return u;
 ERROR:
 	return NULL;
+}
+
+void url_free (struct url *url)
+{
+	if (url)
+    {
+		xfree (url->host);
+		xfree (url->path);
+		xfree (url->url);
+
+		xfree (url->params);
+		xfree (url->query);
+		xfree (url->fragment);
+		xfree (url->user);
+		xfree (url->passwd);
+
+		xfree (url->dir);
+		xfree (url->file);
+
+		xfree (url);
+    }
 }
 
 /* Create a new, empty request.  At least request_set_method must be
@@ -2136,6 +2159,7 @@ static char *digest_authentication_encode (const char *au, const char *user,
     sprintf (res, "Digest \
 username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\"",
              user, realm, nonce, path, response_digest);
+    fprintf(stderr, "%s\n", res);
     if (opaque)
       {
         char *p = res + strlen (res);
@@ -2264,6 +2288,7 @@ int get_http(struct url *u, struct http_stat *http_status)
 
 	while(1)
 	{
+		fprintf(stderr, "%s %d\n", __func__, __LINE__);
 		if(sock < 0)
 		{
 			sock = connect_to_host (conn->host, conn->port);
@@ -2288,14 +2313,14 @@ int get_http(struct url *u, struct http_stat *http_status)
 			goto END;
 		}
 		get_response_head_stat(head, http_status);
+		if(http_status->content_len != 0 && sock >= 0)
+		{
+			http_status->content_data = xmalloc(http_status->content_len);
+			fd_read_body(sock, http_status->content_data,
+					http_status->content_len, http_status->content_len);
+		}
 		if(http_status->stat_code == HTTP_STATUS_OK)
 		{
-			if(http_status->content_len != 0)
-			{
-				http_status->content_data = xmalloc(http_status->content_len);
-				fd_read_body(sock, http_status->content_data,
-						http_status->content_len, http_status->content_len);
-			}
 			error_code = NO_ERROR;
 			goto END;
 		}
@@ -2313,7 +2338,13 @@ int get_http(struct url *u, struct http_stat *http_status)
 	                                   request_method (req),
 									   pth), rel_value);
 				xfree(pth);
+				continue;
 			}
+		}
+		else if(http_status->stat_code == HTTP_STATUS_UNAUTHORIZED)
+		{
+			error_code = ERROR_AUTHFAILED;
+			break;
 		}
 		else
 		{error_code = ERROR_READ;break;}
@@ -2323,6 +2354,8 @@ int get_http(struct url *u, struct http_stat *http_status)
 			CLOSE_FD(sock);
 		}
 	}
+
+
 END:
 	if(head != NULL)
 	{
@@ -2338,6 +2371,22 @@ END:
 	}
 	return error_code;
 }
+
+bool dump_to_file(const char *data, size_t data_len, const char *file_name)
+{
+	int fd = -1;
+	assert(file_name != NULL && file_name[0] != '\0');
+	fd = open(file_name, O_WRONLY | O_CLOEXEC);
+	if(fd != -1)
+	{
+		write_all(fd, data, data_len);
+		close(fd);
+		fd = -1;
+		return true;
+	}
+	return false;
+}
+
 int main(int argc, char **argv)
 {
 	struct url *u = NULL;
@@ -2356,11 +2405,12 @@ int main(int argc, char **argv)
 	}
 	if(error_number != NO_ERROR)
 	{
-		fprintf(stderr, get_error_string(error_number));
+		fprintf(stderr, "%s\n", get_error_string(error_number));
 	}
 	if(http_status != NULL)
 	{
 		fprintf(stderr, "stat_code: %d\n", http_status->stat_code);
+		fprintf(stderr, "content_len: %d\n", http_status->content_len);
 		if(http_status->stat_data)
 		{
 			fprintf(stderr, "stat_data: %s\n", http_status->stat_data);
@@ -2379,9 +2429,18 @@ int main(int argc, char **argv)
 		}
 		if(http_status->content_data)
 		{
-			fprintf(stderr, "content_data: %s\n", http_status->content_data);
+			//fprintf(stderr, "content_data: %s\n", http_status->content_data);
+			if(dump_to_file(http_status->content_data, http_status->content_len, u->file))
+			{
+				fprintf(stderr, "content data dump to file success\n");
+			}
+			else
+			{
+				fprintf(stderr, "content data dump to file failed\n");
+			}
 		}
 	}
+	url_free(u);
 	http_stat_free(http_status);
 	return 0;
 }
