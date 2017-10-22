@@ -71,6 +71,10 @@ enum authentication_scheme
 	AUTHENTICATION_SCHEME_DIGEST
 };
 
+enum {
+  WAIT_FOR_READ = 1,
+  WAIT_FOR_WRITE = 2
+};
 
 void *xmalloc (size_t n)
 {
@@ -183,7 +187,7 @@ struct http_stat * http_stat_new()
 	return hs;
 }
 
-void http_stat_free(struct http_stat *hs)
+void http_stat_data_free(struct http_stat *hs)
 {
 	if(hs != NULL)
 	{
@@ -195,6 +199,16 @@ void http_stat_free(struct http_stat *hs)
 		xfree(hs->ContentType);
 		hs->stat_code = 0;
 		hs->content_len = 0;
+	}
+
+}
+
+void http_stat_free(struct http_stat *hs)
+{
+	if(hs != NULL)
+	{
+		http_stat_data_free(hs);
+		xfree(hs);
 	}
 }
 /* Lists of IP addresses that result from running DNS queries.  See
@@ -241,6 +255,7 @@ enum {
 	ERROR_WRITE,
 	ERROR_READ,
 	ERROR_AUTHFAILED,
+	ERROR_TIMEOUT,
 	ERROR_CNT
 };
 
@@ -260,6 +275,7 @@ static struct error_data error_array[] =
 	{ERROR_WRITE, "Write to Host Error"},
 	{ERROR_READ, "Read from Host Error"},
 	{ERROR_AUTHFAILED, "Authentication Failed"},
+	{ERROR_TIMEOUT, "Timeout"},
 	{-1, NULL}
 };
 struct request {
@@ -1080,6 +1096,58 @@ request_remove_header (struct request *req, char *name)
   return false;
 }
 
+
+int select_fd (int fd, double maxtime, int wait_for)
+{
+  fd_set fdset;
+  fd_set *rd = NULL, *wr = NULL;
+  struct timeval tmout;
+  int result;
+
+  if (fd >= FD_SETSIZE)
+    {
+	  fprintf(stderr, "%s %d, Too many fds open.  Cannot use select on a fd >= %d", __func__, __LINE__, FD_SETSIZE);
+      abort ();
+    }
+  FD_ZERO (&fdset);
+  FD_SET (fd, &fdset);
+  if (wait_for & WAIT_FOR_READ)
+    rd = &fdset;
+  if (wait_for & WAIT_FOR_WRITE)
+    wr = &fdset;
+
+  tmout.tv_sec = (long) maxtime;
+  tmout.tv_usec = 1000000 * (maxtime - (long) maxtime);
+
+  do
+  {
+    result = select (fd + 1, rd, wr, NULL, &tmout);
+  }
+  while (result < 0 && errno == EINTR);
+
+  return result;
+}
+
+bool is_fd_ready(int fd, double maxtime, int wait_for, int *error_code)
+{
+	assert(error_code != NULL);
+
+	if(maxtime > 0)
+	{
+		int ret;
+		ret = select_fd (fd, maxtime, wait_for);
+		if(ret == 0)
+		{
+			*error_code = ERROR_TIMEOUT;
+		}
+		if(ret <= 0)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 /* Create an address_list from the addresses in the given struct
    addrinfo.  */
 
@@ -1206,6 +1274,7 @@ static socklen_t sockaddr_size (const struct sockaddr *sa)
     default:
       abort ();
     }
+  return 0;
 }
 
 static void address_list_delete (struct address_list *al)
@@ -1291,6 +1360,10 @@ int connect_to_host (const char *host, int port)
 
   struct address_list *al = lookup_host (host);
 
+  if(al == NULL)
+  {
+	  return -1;
+  }
   address_list_get_bounds (al, &start, &end);
   for (i = start; i < end; i++)
     {
@@ -1635,14 +1708,21 @@ char *fd_read_hunk (int fd, hunk_terminator_t terminator, long sizehint, long ma
 }
 
 int fd_read_body(int fd, char *buf, const int buf_size,
-		int toread)
+		int toread, int *error_code)
 {
 	int sum_read = 0;
 	int read_len = 0;
 	char *p = buf;
+	double maxTime = 5;
+
+	assert(error_code != NULL);
 	if(buf == NULL)
 	{
 		abort();
+	}
+	if(!is_fd_ready(fd, 5, WAIT_FOR_READ, error_code))
+	{
+		return -1;
 	}
 	for(sum_read = 0; toread > 0 && sum_read < buf_size; )
 	{
@@ -2312,12 +2392,23 @@ int get_http(struct url *u, struct http_stat *http_status)
 			error_code = ERROR_READ;
 			goto END;
 		}
+		http_stat_data_free(http_status);
 		get_response_head_stat(head, http_status);
+		if(head != NULL)
+		{
+			xfree(head);
+		}
 		if(http_status->content_len != 0 && sock >= 0)
 		{
+			if(http_status->content_data != NULL)
+			{
+				xfree(http_status->content_data);
+				http_status->content_data = NULL;
+			}
 			http_status->content_data = xmalloc(http_status->content_len);
-			fd_read_body(sock, http_status->content_data,
-					http_status->content_len, http_status->content_len);
+			if(fd_read_body(sock, http_status->content_data,
+					http_status->content_len, http_status->content_len, &error_code) <= 0)
+				goto END;
 		}
 		if(http_status->stat_code == HTTP_STATUS_OK)
 		{
@@ -2376,7 +2467,7 @@ bool dump_to_file(const char *data, size_t data_len, const char *file_name)
 {
 	int fd = -1;
 	assert(file_name != NULL && file_name[0] != '\0');
-	fd = open(file_name, O_WRONLY | O_CLOEXEC);
+	fd = open(file_name, O_CREAT | O_WRONLY | O_CLOEXEC);
 	if(fd != -1)
 	{
 		write_all(fd, data, data_len);
@@ -2384,6 +2475,7 @@ bool dump_to_file(const char *data, size_t data_len, const char *file_name)
 		fd = -1;
 		return true;
 	}
+	fprintf(stderr, "%s %d, %s\n", __func__, __LINE__, strerror(errno));
 	return false;
 }
 
@@ -2392,11 +2484,15 @@ int main(int argc, char **argv)
 	struct url *u = NULL;
 	int error_number = NO_ERROR;
 	struct http_stat *http_status = NULL;
+	int i = 0;
 	if(argc != 2)
 	{
 		printf("usage: %s url\n", argv[0]);
 		return -1;
 	}
+	while(1)
+	{
+	i++;
 	u = url_parse(argv[1], &error_number);
 	if(u != NULL && error_number == NO_ERROR)
 	{
@@ -2407,7 +2503,7 @@ int main(int argc, char **argv)
 	{
 		fprintf(stderr, "%s\n", get_error_string(error_number));
 	}
-	if(http_status != NULL)
+	else if(http_status != NULL)
 	{
 		fprintf(stderr, "stat_code: %d\n", http_status->stat_code);
 		fprintf(stderr, "content_len: %d\n", http_status->content_len);
@@ -2432,16 +2528,20 @@ int main(int argc, char **argv)
 			//fprintf(stderr, "content_data: %s\n", http_status->content_data);
 			if(dump_to_file(http_status->content_data, http_status->content_len, u->file))
 			{
-				fprintf(stderr, "content data dump to file success\n");
+				fprintf(stderr, "content data dump to file success, %d\n", i);
 			}
 			else
 			{
-				fprintf(stderr, "content data dump to file failed\n");
+				fprintf(stderr, "content data dump to file failed, %d\n", i);
 			}
 		}
 	}
 	url_free(u);
+	u = NULL;
 	http_stat_free(http_status);
+	http_status = NULL;
+	sleep(3);
+	}
 	return 0;
 }
 
