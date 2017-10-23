@@ -172,7 +172,7 @@ struct http_stat
 {
 	int stat_code;
 	char *stat_data;
-	char *new_location;
+	char *location;
 	int content_len;
 	char *content_data;
 	char *connection_stat;
@@ -192,7 +192,7 @@ void http_stat_data_free(struct http_stat *hs)
 	if(hs != NULL)
 	{
 		xfree(hs->stat_data);
-		xfree(hs->new_location);
+		xfree(hs->location);
 		xfree(hs->content_data);
 		xfree(hs->connection_stat);
 		xfree(hs->WWWAuthenticate);
@@ -355,7 +355,7 @@ struct scheme_data
 static struct scheme_data supported_schemes[] =
 {
 	{ "http",     "http://",  DEFAULT_HTTP_PORT,  scm_has_query|scm_has_fragment },
-	{ "https",    "https://", DEFAULT_HTTPS_PORT, scm_has_query|scm_has_fragment },
+//	{ "https",    "https://", DEFAULT_HTTPS_PORT, scm_has_query|scm_has_fragment },
 	/* SCHEME_INVALID */
 	{ NULL,       NULL,       -1,                 0 }
 };
@@ -2248,6 +2248,9 @@ username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\"",
         strcat (p, "\"");
       }
   }
+  xfree_null (realm);
+  xfree_null (opaque);
+  xfree_null (nonce);
   return res;
 }
 
@@ -2348,7 +2351,7 @@ void get_response_head_stat(const char *head, struct http_stat *http_status)
 	{
 		http_status->content_len = 0;
 	}
-	http_status->new_location = resp_header_strdup (resp, "Location");
+	http_status->location = resp_header_strdup (resp, "Location");
 	http_status->WWWAuthenticate = resp_header_strdup (resp, "WWW-Authenticate");
 	http_status->ContentType = resp_header_strdup (resp, "Content-Type");
 	resp_free(resp);
@@ -2466,8 +2469,13 @@ END:
 bool dump_to_file(const char *data, size_t data_len, const char *file_name)
 {
 	int fd = -1;
+	const char *p = "./dump.file";
 	assert(file_name != NULL && file_name[0] != '\0');
-	fd = open(file_name, O_CREAT | O_WRONLY | O_CLOEXEC);
+	if(file_name[strlen(file_name) - 1] != '\\')
+	{
+		p = file_name;
+	}
+	fd = open(p, O_CREAT | O_WRONLY | O_CLOEXEC);
 	if(fd != -1)
 	{
 		write_all(fd, data, data_len);
@@ -2503,7 +2511,7 @@ int main(int argc, char **argv)
 	{
 		fprintf(stderr, "%s\n", get_error_string(error_number));
 	}
-	else if(http_status != NULL)
+	if(http_status != NULL)
 	{
 		fprintf(stderr, "stat_code: %d\n", http_status->stat_code);
 		fprintf(stderr, "content_len: %d\n", http_status->content_len);
@@ -2511,9 +2519,9 @@ int main(int argc, char **argv)
 		{
 			fprintf(stderr, "stat_data: %s\n", http_status->stat_data);
 		}
-		if(http_status->new_location)
+		if(http_status->location)
 		{
-			fprintf(stderr, "new_location: %s\n", http_status->new_location);
+			fprintf(stderr, "Location: %s\n", http_status->location);
 		}
 		if(http_status->WWWAuthenticate)
 		{
