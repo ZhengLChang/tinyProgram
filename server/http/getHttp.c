@@ -18,8 +18,8 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <fcntl.h>
-#include "md5.h"
-#include "gen-md5.h"
+
+# include <openssl/md5.h>
 
 
 /* The number of elements in an array.  For example:
@@ -33,6 +33,7 @@
 #define X2DIGITS_TO_NUM(h1, h2) ((XDIGIT_TO_NUM (h1) << 4) + XDIGIT_TO_NUM (h2))
 #define xzero(x) memset (&(x), '\0', sizeof (x))
 static void url_unescape (char *s);
+#define MD5_HASHLEN 16
 /* HTTP/1.0 status codes from RFC1945, provided for reference.  */
 /* Successful 2xx.  */
 #define HTTP_STATUS_OK                    200
@@ -2195,37 +2196,37 @@ static char *digest_authentication_encode (const char *au, const char *user,
 
   /* Calculate the digest value.  */
   {
-    ALLOCA_MD5_CONTEXT (ctx);
+	MD5_CTX ctx;
     unsigned char hash[MD5_HASHLEN];
     char a1buf[MD5_HASHLEN * 2 + 1], a2buf[MD5_HASHLEN * 2 + 1];
     char response_digest[MD5_HASHLEN * 2 + 1];
 
     /* A1BUF = H(user ":" realm ":" password) */
-    gen_md5_init (ctx);
-    gen_md5_update ((unsigned char *)user, strlen (user), ctx);
-    gen_md5_update ((unsigned char *)":", 1, ctx);
-    gen_md5_update ((unsigned char *)realm, strlen (realm), ctx);
-    gen_md5_update ((unsigned char *)":", 1, ctx);
-    gen_md5_update ((unsigned char *)passwd, strlen (passwd), ctx);
-    gen_md5_finish (ctx, hash);
+    MD5_Init (&ctx);
+    MD5_Update (&ctx, (unsigned char *)user, strlen (user));
+    MD5_Update (&ctx, (unsigned char *)":", 1);
+    MD5_Update (&ctx, (unsigned char *)realm, strlen (realm));
+    MD5_Update (&ctx, (unsigned char *)":", 1);
+    MD5_Update (&ctx, (unsigned char *)passwd, strlen (passwd));
+    MD5_Final (hash, &ctx);
     dump_hash (a1buf, hash);
 
     /* A2BUF = H(method ":" path) */
-    gen_md5_init (ctx);
-    gen_md5_update ((unsigned char *)method, strlen (method), ctx);
-    gen_md5_update ((unsigned char *)":", 1, ctx);
-    gen_md5_update ((unsigned char *)path, strlen (path), ctx);
-    gen_md5_finish (ctx, hash);
+    MD5_Init (&ctx);
+    MD5_Update (&ctx, (unsigned char *)method, strlen (method));
+    MD5_Update (&ctx, (unsigned char *)":", 1);
+    MD5_Update (&ctx, (unsigned char *)path, strlen (path));
+    MD5_Final (hash, &ctx);
     dump_hash (a2buf, hash);
 
     /* RESPONSE_DIGEST = H(A1BUF ":" nonce ":" A2BUF) */
-    gen_md5_init (ctx);
-    gen_md5_update ((unsigned char *)a1buf, MD5_HASHLEN * 2, ctx);
-    gen_md5_update ((unsigned char *)":", 1, ctx);
-    gen_md5_update ((unsigned char *)nonce, strlen (nonce), ctx);
-    gen_md5_update ((unsigned char *)":", 1, ctx);
-    gen_md5_update ((unsigned char *)a2buf, MD5_HASHLEN * 2, ctx);
-    gen_md5_finish (ctx, hash);
+    MD5_Init (&ctx);
+    MD5_Update (&ctx, (unsigned char *)a1buf, MD5_HASHLEN * 2);
+    MD5_Update (&ctx, (unsigned char *)":", 1);
+    MD5_Update (&ctx, (unsigned char *)nonce, strlen (nonce));
+    MD5_Update (&ctx, (unsigned char *)":", 1);
+    MD5_Update (&ctx, (unsigned char *)a2buf, MD5_HASHLEN * 2);
+    MD5_Final (hash, &ctx);
     dump_hash (response_digest, hash);
 
     res = xmalloc (strlen (user)
@@ -2239,7 +2240,7 @@ static char *digest_authentication_encode (const char *au, const char *user,
     sprintf (res, "Digest \
 username=\"%s\", realm=\"%s\", nonce=\"%s\", uri=\"%s\", response=\"%s\"",
              user, realm, nonce, path, response_digest);
-    fprintf(stderr, "%s\n", res);
+//    fprintf(stderr, "%s\n", res);
     if (opaque)
       {
         char *p = res + strlen (res);
@@ -2475,7 +2476,7 @@ bool dump_to_file(const char *data, size_t data_len, const char *file_name)
 	{
 		p = file_name;
 	}
-	fd = open(p, O_CREAT | O_WRONLY | O_CLOEXEC);
+	fd = open(p, O_CREAT | O_WRONLY | O_CLOEXEC, S_IRWXU);
 	if(fd != -1)
 	{
 		write_all(fd, data, data_len);
@@ -2492,7 +2493,7 @@ struct http_stat * get_url_stat(char *urlStr)
 	struct url *u = NULL;
 	int error_number = NO_ERROR;
 	struct http_stat *http_status = NULL;
-	if(urlStr = NULL || urlStr[0] == '\0')
+	if(urlStr == NULL || urlStr[0] == '\0')
 	{
 		return NULL;
 	}
@@ -2506,8 +2507,25 @@ struct http_stat * get_url_stat(char *urlStr)
 	{
 		fprintf(stderr, "%s\n", get_error_string(error_number));
 	}
-#if 0
-	if(http_status != NULL)
+
+	url_free(u);
+	u = NULL;
+	/*
+	http_stat_free(http_status);
+	http_status = NULL;
+	*/
+	return http_status;
+}
+
+int main(int argc, char **argv)
+{
+	struct http_stat *http_status = NULL;
+	if(argc != 2)
+	{
+		printf("usage: %s url\n", argv[0]);
+		return -1;
+	}
+	if((http_status = get_url_stat(argv[1])) != NULL)
 	{
 		fprintf(stderr, "stat_code: %d\n", http_status->stat_code);
 		fprintf(stderr, "content_len: %d\n", http_status->content_len);
@@ -2530,28 +2548,20 @@ struct http_stat * get_url_stat(char *urlStr)
 		if(http_status->content_data)
 		{
 			//fprintf(stderr, "content_data: %s\n", http_status->content_data);
-			if(dump_to_file(http_status->content_data, http_status->content_len, u->file))
+			if(dump_to_file(http_status->content_data, http_status->content_len, "test"))
 			{
-				fprintf(stderr, "content data dump to file success, %d\n", i);
+				fprintf(stderr, "content data dump to file success\n");
 			}
 			else
 			{
-				fprintf(stderr, "content data dump to file failed, %d\n", i);
+				fprintf(stderr, "content data dump to file failed\n");
 			}
 		}
 	}
-#endif
-	url_free(u);
-	u = NULL;
-	/*
 	http_stat_free(http_status);
 	http_status = NULL;
-	*/
-	return http_status;
+	return 0;
 }
-
-
-
 
 
 
