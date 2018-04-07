@@ -41,7 +41,12 @@ int main()
 		printf("i = %d, NEXT_PORT_OF_2(%d) = %d\n", i, i, NEXT_PORT_OF_2(i));
 	}
 #endif
-	int arr[] = {1,  2, 3, 4, 5, 6, 7, 8};
+	int arr[10000];
+	int i = 0;
+	for(i = 0; i < sizeof(arr) / sizeof(int); i++)
+	{
+		arr[i] = i;
+	}
 	printf("%d\n", binary_search(arr, sizeof(arr) / sizeof(int), 9));
 	return 0;
 }

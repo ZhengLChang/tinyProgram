@@ -14,13 +14,13 @@ static sqlite3 *sms_db;
 static short_message_data_t g_sms_data;
 
 static int free_sms_data();
+static int delete_sms_config_by_limit(int type);
 static void array_append( void **array,
 	      unsigned elem_size,
 	      unsigned *p_used,
 	      unsigned *p_size,
 	      const void *value)
 {
-	int i = 0;
 	assert(array != NULL && p_used != NULL && p_size != NULL);
 	if(*p_size == 0)
 	{
@@ -113,29 +113,29 @@ static int sqlite_exec_callback(void *data, int argc, char **argv, char **ColNam
 		case SHORT_MESSAGE_IN:
 			array_append((void **)&g_sms_data.inBox,
 					sizeof(message_format_t),
-			  		&g_sms_data.inBoxCnt,
-			  		&g_sms_data.inBoxSize,
+			  		(unsigned *)&g_sms_data.inBoxCnt,
+			  		(unsigned *)&g_sms_data.inBoxSize,
 			  		(const void *)&message);
 			break;
 		case SHORT_MESSAGE_SENT:
 			array_append((void **)&g_sms_data.sentBox,
 					sizeof(message_format_t),
-			  		&g_sms_data.sentBoxCnt,
-			  		&g_sms_data.sentBoxSize,
+			  		(unsigned *)&g_sms_data.sentBoxCnt,
+			  		(unsigned *)&g_sms_data.sentBoxSize,
 			  		(const void *)&message);
 			break;
 		case SHORT_MESSAGE_SENDING:
 			array_append((void **)&g_sms_data.sendingBox,
 					sizeof(message_format_t),
-			  		&g_sms_data.sendingBoxCnt,
-			  		&g_sms_data.sendingBoxSize,
+			  		(unsigned *)&g_sms_data.sendingBoxCnt,
+			  		(unsigned *)&g_sms_data.sendingBoxSize,
 			  		(const void *)&message);
 			break;
 		case SHORT_MESSAGE_DRAFT:
 			array_append((void **)&g_sms_data.draftBox,
 					sizeof(message_format_t),
-			  		&g_sms_data.draftBoxCnt,
-			  		&g_sms_data.draftBoxSize,
+			  		(unsigned *)&g_sms_data.draftBoxCnt,
+			  		(unsigned *)&g_sms_data.draftBoxSize,
 			  		(const void *)&message);
 			break;
 	}
@@ -174,6 +174,7 @@ int load_sms_config()
 {
 	int retSqlite = SQLITE_OK;
 	char *dbErrMsg = 0;
+	int type_index = SHORT_MESSAGE_IN;
 	char *sql = "create table if not exists sms("\
 		"smsindex integer primary key autoincrement,"
 		"smstype int not null,"\
@@ -193,6 +194,10 @@ int load_sms_config()
 	{
 		fprintf(stderr, "SQL error: %s\n", dbErrMsg);
 		sqlite3_free(dbErrMsg);
+	}
+	for(type_index = SHORT_MESSAGE_IN; type_index < SHORT_MESSAGE_CNT; type_index++)
+	{
+		delete_sms_config_by_limit(type_index);
 	}
 	_get_sms_config();
 	return 0;	
@@ -286,6 +291,60 @@ static int _update_sms_conf(message_format_t *message)
 	return 0;
 }
 
+static int delete_sms_config_by_limit(int type)
+{
+	char sql[512] = "";
+	char *dbErrMsg = 0;
+	int n = 0;
+	int retSqlite = SQLITE_OK;
+	int message_type_limit = -1;
+	if(type < 0)
+	{
+		fprintf(stderr, "%s %d, type is negative\n", __func__, __LINE__);
+		return -1;
+	}
+	switch(type)
+	{
+		case SHORT_MESSAGE_IN:
+			message_type_limit = MAX_CNT_SHORT_MESSAGE_IN;
+			break;
+		case SHORT_MESSAGE_UNREAD:
+			message_type_limit = MAX_CNT_SHORT_MESSAGE_UNREAD;
+			break;
+		case SHORT_MESSAGE_SENT:
+			message_type_limit = MAX_CNT_SHORT_MESSAGE_SENT;
+			break;
+		case SHORT_MESSAGE_SENDING:
+			message_type_limit = MAX_CNT_SHORT_MESSAGE_SENDING;
+			break;
+		case SHORT_MESSAGE_DRAFT:
+			message_type_limit = MAX_CNT_SHORT_MESSAGE_DRAFT;
+			break;
+		default:
+			fprintf(stderr, "%s %d, unknow type: %d\n", __func__, __LINE__, type);
+			return -1;
+			break;
+	}
+	n = snprintf(sql, sizeof(sql), "delete from %s where smstype=%d and smsindex not in (select smsindex from %s where smstype=%d order by smsdonetime desc limit %d);",
+				DB_TABLE_NAME,
+				type,
+				DB_TABLE_NAME,
+				type,
+				message_type_limit);
+	if(n > sizeof(sql))
+	{
+		fprintf(stderr, "SMS message too big, Can't store\n");
+		return -1;
+	}
+	if((retSqlite = sqlite3_exec(sms_db, sql, NULL, 0, &dbErrMsg)) != SQLITE_OK)
+	{
+		fprintf(stderr, "Delete SQL error: %s\n", dbErrMsg);
+		sqlite3_free(dbErrMsg);
+		return -1;
+	}
+	return 0;
+}
+
 
 int add_sms_config(message_format_t *message)
 {
@@ -324,11 +383,13 @@ int add_sms_config(message_format_t *message)
 		else
 		{
 			_add_sms_conf(message);
+			delete_sms_config_by_limit(message->type);
 		}
 	}
 	else
 	{
 		_add_sms_conf(message);
+		delete_sms_config_by_limit(message->type);
 	}
 	free_sms_data();
 	_get_sms_config();
@@ -463,6 +524,7 @@ void print_box_data()
 int main()
 {
 	message_format_t message;
+	int i = 0;
 	load_sms_config();
 
 	print_box_data();
@@ -472,15 +534,20 @@ int main()
 	empty_sms_config_by_type(SHORT_MESSAGE_DRAFT);
 	print_box_data();
 
+	for(i = 0; i < 100; i++)
+	{
+	memset(&message, 0, sizeof(message));
 	message.type = SHORT_MESSAGE_IN;
 	strncpy(message.sendTo, "111", sizeof(message.sendTo));
 	strncpy(message.sendFrom, "120", sizeof(message.sendFrom));
 	strncpy(message.message, "sms test", sizeof(message.sendFrom));
-	message.doneTime = time(NULL);
+	message.doneTime = time(NULL) + i * 5;
 	add_sms_config(&message);
+	}
 	print_box_data();
 
 	sleep(2);
+	memset(&message, 0, sizeof(message));
 	message.type = SHORT_MESSAGE_SENT;
 	strncpy(message.sendTo, "111", sizeof(message.sendTo));
 	strncpy(message.sendFrom, "120", sizeof(message.sendFrom));
@@ -491,6 +558,7 @@ int main()
 	print_box_data();
 
 	sleep(2);
+	memset(&message, 0, sizeof(message));
 	message.type = SHORT_MESSAGE_SENDING;
 	strncpy(message.sendTo, "111", sizeof(message.sendTo));
 	strncpy(message.sendFrom, "120", sizeof(message.sendFrom));
@@ -500,13 +568,18 @@ int main()
 	print_box_data();
 
 	sleep(2);
+	for(i = 0; i < 100; i++)
+	{
+	memset(&message, 0, sizeof(message));
 	message.type = SHORT_MESSAGE_DRAFT;
 	strncpy(message.sendTo, "111", sizeof(message.sendTo));
 	strncpy(message.sendFrom, "120", sizeof(message.sendFrom));
 	strncpy(message.message, "sms test", sizeof(message.sendFrom));
-	message.doneTime = time(NULL);
+	message.doneTime = time(NULL) + 2 * i;
 	add_sms_config(&message);
+	}
 	print_box_data();
+	fprintf(stderr, "%ld\n", message.doneTime);
 
 	unload_sms_config();
 	return 0;

@@ -29,6 +29,7 @@ int main(int argc, const char **argv)
 void modify_return_address(int num)
 {
 	int *return_address = (int *)((char *)(&num) - 4); 
-	*return_address = (int )(main);
+	printf("%0x\n", &num);
+	*return_address = (0x80483cd); /*(int )((char *)main - 4);*/
 	return;		
 }
